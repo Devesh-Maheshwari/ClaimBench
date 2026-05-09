@@ -9,6 +9,7 @@ from typing import Any
 from claimbench.manifest import ClaimManifest, load_all_manifests
 from claimbench.paths import EXAMPLE_MANIFESTS_ROOT
 from claimbench.report import generate_reproducibility_report, report_to_markdown
+from claimbench.storage.cached_runs import load_cached_run_results
 
 
 @dataclass(frozen=True)
@@ -44,9 +45,9 @@ class LocalStore:
 
     def paper_summary(self, paper_id: str) -> dict[str, Any]:
         manifest = self.get_manifest(paper_id)
+        report = generate_reproducibility_report(manifest, load_cached_run_results(manifest))
         paper = manifest.data["paper"]
-        claims = manifest.claims
-        statuses = [claim["status"] for claim in claims]
+        statuses = [claim.status for claim in report.claims]
         return {
             "paper_id": paper["paper_id"],
             "title": paper["title"],
@@ -56,24 +57,29 @@ class LocalStore:
             "repo_commit": paper["repo_commit"],
             "domain": paper["domain"],
             "hardware_profile": paper.get("hardware_profile"),
-            "num_claims": len(claims),
+            "num_claims": len(report.claims),
+            "num_cached_runs": report.summary["num_runs"],
             "num_reproduced": statuses.count("reproduced"),
             "num_needs_review": statuses.count("needs_review"),
-            "overall_status": _overall_status(statuses),
+            "overall_status": report.summary["overall_status"],
         }
 
     def claim_rows(self, paper_id: str) -> list[list[Any]]:
         manifest = self.get_manifest(paper_id)
+        report = generate_reproducibility_report(manifest, load_cached_run_results(manifest))
+        report_by_claim = {claim.claim_id: claim for claim in report.claims}
         rows: list[list[Any]] = []
         for claim in manifest.claims:
+            claim_report = report_by_claim[claim["claim_id"]]
             metric = claim["expected_metric"]
             rows.append(
                 [
                     claim["claim_id"],
-                    claim["status"],
+                    claim_report.status,
                     claim["claim_type"],
                     claim["paper_location"],
                     _format_metric(metric),
+                    claim_report.observed_metric if claim_report.observed_metric is not None else "not run",
                     ", ".join(claim.get("linked_experiment_ids", [])) or "unlinked",
                     claim["text"],
                 ]
@@ -83,6 +89,8 @@ class LocalStore:
     def claim_evidence(self, paper_id: str, claim_id: str | None = None) -> ClaimEvidence:
         manifest = self.get_manifest(paper_id)
         claim = _select_claim(manifest, claim_id)
+        report = generate_reproducibility_report(manifest, load_cached_run_results(manifest))
+        claim_report = _select_claim_report(report.claims, claim["claim_id"])
         experiments = _linked_experiments(manifest, claim)
         command = "not linked yet"
         if experiments:
@@ -92,18 +100,17 @@ class LocalStore:
             claim_id=claim["claim_id"],
             experiment_ids=claim.get("linked_experiment_ids", []),
             expected_metric=_format_metric(claim["expected_metric"]),
-            observed_metric="pending runner implementation",
-            verdict=claim["status"],
+            observed_metric=str(claim_report.observed_metric)
+            if claim_report.observed_metric is not None
+            else "not run",
+            verdict=claim_report.status,
             command=command,
-            notes=(
-                "This is manifest-level evidence. Week 3 will replace the "
-                "placeholder observed metric with a sandboxed run result."
-            ),
+            notes=claim_report.reason,
         )
 
     def report_preview(self, paper_id: str) -> str:
         manifest = self.get_manifest(paper_id)
-        report = generate_reproducibility_report(manifest)
+        report = generate_reproducibility_report(manifest, load_cached_run_results(manifest))
         return report_to_markdown(report)
 
 
@@ -121,6 +128,13 @@ def _overall_status(statuses: list[str]) -> str:
     if any(status in {"failed", "partial"} for status in statuses):
         return "partial"
     return "needs_review"
+
+
+def _select_claim_report(claim_reports: list[Any], claim_id: str) -> Any:
+    for claim_report in claim_reports:
+        if claim_report.claim_id == claim_id:
+            return claim_report
+    raise KeyError(f"Unknown claim report: {claim_id}")
 
 
 def _select_claim(manifest: ClaimManifest, claim_id: str | None) -> dict[str, Any]:

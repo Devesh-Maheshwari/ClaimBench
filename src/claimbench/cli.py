@@ -20,9 +20,11 @@ from claimbench.manifest import (
     validate_manifest_data,
 )
 from claimbench.onboarding import init_paper_manifest
+from claimbench.report import generate_reproducibility_report, report_to_dict, report_to_markdown
 from claimbench.repo_scanner import scan_repository
 from claimbench.runner.docker_runner import run_manifest_experiment_in_docker
 from claimbench.runner.executor import run_manifest_experiment
+from claimbench.storage.cached_runs import load_cached_run_results
 
 
 app = typer.Typer(help="ClaimBench reproducibility auditor CLI.")
@@ -150,6 +152,37 @@ def init_paper(
         title=title,
     )
     console.print(f"[green]Draft manifest written:[/green] {manifest}")
+
+
+@app.command("report")
+def report(
+    manifest_path: Annotated[Path, typer.Argument(help="Path to a ClaimManifest JSON file.")],
+    output_format: Annotated[
+        str,
+        typer.Option("--format", help="Report output format: markdown or json."),
+    ] = "markdown",
+    use_cached_runs: Annotated[
+        bool,
+        typer.Option("--cached-runs/--no-cached-runs", help="Include manifest cached_runs in the report."),
+    ] = True,
+) -> None:
+    """Render a reproducibility report from a manifest."""
+
+    try:
+        manifest = load_manifest(manifest_path)
+        run_results = load_cached_run_results(manifest) if use_cached_runs else []
+        generated = generate_reproducibility_report(manifest, run_results)
+    except (ManifestError, KeyError, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    if output_format == "markdown":
+        console.print(report_to_markdown(generated))
+    elif output_format == "json":
+        print(json.dumps(report_to_dict(generated), indent=2, default=str))
+    else:
+        console.print(f"[red]Unsupported report format: {output_format}. Expected 'markdown' or 'json'.[/red]")
+        raise typer.Exit(1)
 
 
 @app.command("run-experiment")

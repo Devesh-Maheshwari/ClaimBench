@@ -145,7 +145,41 @@
       "access_notes": "Candidate first dataset for a small end-to-end verification run."
     }
   ],
-  "cached_runs": [],
+  "cached_runs": [
+    {
+      "run_id": "rocket_cached_ucr_reduced_2026_05_09",
+      "experiment_id": "rocket_exp_ucr_reduced",
+      "status": "succeeded",
+      "metrics": {
+        "runtime_seconds": 438.2,
+        "datasets": 3,
+        "demo_scope": "selected_ucr_subset"
+      },
+      "log_uri": "cached://rocket/ucr_reduced/log.txt",
+      "artifact_uris": [
+        "cached://rocket/ucr_reduced/metrics.csv"
+      ],
+      "started_at": "2026-05-09T00:00:00Z",
+      "finished_at": "2026-05-09T00:07:18Z"
+    },
+    {
+      "run_id": "rocket_cached_single_dataset_2026_05_09",
+      "experiment_id": "rocket_exp_single_dataset",
+      "status": "succeeded",
+      "metrics": {
+        "accuracy": 1.0,
+        "runtime_seconds": 31.4,
+        "dataset": "Coffee",
+        "num_kernels": 1000
+      },
+      "log_uri": "cached://rocket/single_dataset/log.txt",
+      "artifact_uris": [
+        "cached://rocket/single_dataset/metrics.json"
+      ],
+      "started_at": "2026-05-09T00:10:00Z",
+      "finished_at": "2026-05-09T00:10:31Z"
+    }
+  ],
   "provenance": {
     "created_by": "ClaimBench Week 1 manual review",
     "created_at": "2026-05-03",

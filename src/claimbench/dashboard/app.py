@@ -116,6 +116,7 @@ def build_app():
                     "Type",
                     "Paper Location",
                     "Expected Metric",
+                    "Observed Metric",
                     "Linked Experiments",
                     "Claim",
                 ],

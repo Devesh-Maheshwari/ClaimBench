@@ -40,6 +40,7 @@ def _write_manifest(path: Path) -> None:
                             "type": "absolute",
                             "value": 0.02,
                         },
+                        "linked_experiment_ids": ["exp_accuracy"],
                         "status": "executable",
                     }
                 ],
@@ -72,6 +73,17 @@ def _write_manifest(path: Path) -> None:
                     "created_at": "2026-05-09T00:00:00Z",
                     "review_status": "draft",
                 },
+                "cached_runs": [
+                    {
+                        "run_id": "fixture_cached_accuracy",
+                        "experiment_id": "exp_accuracy",
+                        "status": "succeeded",
+                        "metrics": {
+                            "accuracy": 0.91,
+                            "runtime_seconds": 1.2,
+                        },
+                    }
+                ],
             }
         ),
         encoding="utf-8",
@@ -168,3 +180,47 @@ def test_run_experiment_cli_rejects_unknown_sandbox(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "Unsupported sandbox" in result.output
+
+
+def test_report_cli_renders_markdown_with_cached_runs(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    _write_manifest(manifest_path)
+
+    result = runner.invoke(app, ["report", str(manifest_path)])
+
+    assert result.exit_code == 0
+    assert "ClaimBench Report: Fixture Paper" in result.output
+    assert "Experiment runs: `1`" in result.output
+    assert "Observed: `0.91`" in result.output
+    assert "Observed metric is within tolerance." in result.output
+
+
+def test_report_cli_renders_json_without_cached_runs(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    _write_manifest(manifest_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "report",
+            str(manifest_path),
+            "--format",
+            "json",
+            "--no-cached-runs",
+        ],
+    )
+
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data["summary"]["num_runs"] == 0
+    assert data["claims"][0]["observed_metric"] is None
+
+
+def test_report_cli_rejects_unknown_format(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    _write_manifest(manifest_path)
+
+    result = runner.invoke(app, ["report", str(manifest_path), "--format", "html"])
+
+    assert result.exit_code == 1
+    assert "Unsupported report format" in result.output

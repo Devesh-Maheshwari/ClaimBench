@@ -139,7 +139,41 @@
       "access_notes": "Candidate first dataset for a small end-to-end verification run."
     }
   ],
-  "cached_runs": [],
+  "cached_runs": [
+    {
+      "run_id": "minirocket_cached_ucr_reduced_2026_05_09",
+      "experiment_id": "minirocket_exp_ucr_reduced",
+      "status": "succeeded",
+      "metrics": {
+        "runtime_seconds": 12.8,
+        "accuracy": 1.0,
+        "dataset": "Coffee"
+      },
+      "log_uri": "cached://minirocket/ucr_reduced/log.txt",
+      "artifact_uris": [
+        "cached://minirocket/ucr_reduced/metrics.json"
+      ],
+      "started_at": "2026-05-09T00:20:00Z",
+      "finished_at": "2026-05-09T00:20:13Z"
+    },
+    {
+      "run_id": "minirocket_cached_repeatability_2026_05_09",
+      "experiment_id": "minirocket_exp_repeatability",
+      "status": "succeeded",
+      "metrics": {
+        "max_accuracy_delta": 0.0,
+        "runs": 3,
+        "dataset": "Coffee",
+        "runtime_seconds": 39.6
+      },
+      "log_uri": "cached://minirocket/repeatability/log.txt",
+      "artifact_uris": [
+        "cached://minirocket/repeatability/metrics.json"
+      ],
+      "started_at": "2026-05-09T00:22:00Z",
+      "finished_at": "2026-05-09T00:22:40Z"
+    }
+  ],
   "provenance": {
     "created_by": "ClaimBench Week 2 manual review",
     "created_at": "2026-05-08",
