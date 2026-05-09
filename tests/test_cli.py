@@ -164,6 +164,60 @@ def test_run_experiment_cli_routes_to_docker_runner(
     assert '"status": "succeeded"' in result.output
 
 
+def test_run_experiment_cli_writes_cache_record(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    cache_record = tmp_path / "runs" / "cache_record.json"
+    _write_manifest(manifest_path)
+
+    def fake_run_manifest_experiment(
+        manifest: ClaimManifest,
+        experiment_id: str,
+        **kwargs: object,
+    ) -> ExperimentRunResult:
+        return ExperimentRunResult(
+            experiment_id=experiment_id,
+            status="succeeded",
+            command=["python", "run.py"],
+            returncode=0,
+            runtime_seconds=1.2,
+            stdout="done\n",
+            stderr="",
+            observed_metric=0.91,
+            verdicts=[],
+        )
+
+    monkeypatch.setattr(
+        "claimbench.cli.run_manifest_experiment",
+        fake_run_manifest_experiment,
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "run-experiment",
+            str(manifest_path),
+            "exp_accuracy",
+            "--workspace",
+            str(tmp_path),
+            "--metric-output",
+            "runs/metrics.json",
+            "--cache-record-output",
+            str(cache_record),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Cached run record written" in result.output
+    record = json.loads(cache_record.read_text(encoding="utf-8"))
+    assert record["experiment_id"] == "exp_accuracy"
+    assert record["metrics"]["accuracy"] == 0.91
+    assert record["metrics"]["runtime_seconds"] == 1.2
+    assert record["artifact_uris"] == ["runs/metrics.json"]
+
+
 def test_run_experiment_cli_rejects_unknown_sandbox(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     _write_manifest(manifest_path)

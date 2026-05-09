@@ -25,7 +25,7 @@ from claimbench.report import generate_reproducibility_report, report_to_dict, r
 from claimbench.repo_scanner import scan_repository
 from claimbench.runner.docker_runner import run_manifest_experiment_in_docker
 from claimbench.runner.executor import run_manifest_experiment
-from claimbench.storage.cached_runs import load_cached_run_results
+from claimbench.storage.cached_runs import build_cached_run_record, load_cached_run_results
 from claimbench.tools.local import (
     cached_report_tool,
     claim_evidence_tool,
@@ -300,6 +300,13 @@ def run_experiment(
         str,
         typer.Option("--docker-cpus", help="Docker CPU limit for --sandbox docker."),
     ] = "2",
+    cache_record_output: Annotated[
+        Path | None,
+        typer.Option(
+            "--cache-record-output",
+            help="Optional path to write a manifest cached_runs record for this run.",
+        ),
+    ] = None,
 ) -> None:
     """Run a manifest experiment and print the captured result."""
 
@@ -330,6 +337,19 @@ def run_experiment(
     except (ManifestError, KeyError, ValueError) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
+
+    if cache_record_output is not None:
+        record = build_cached_run_record(
+            manifest,
+            result,
+            artifact_uri=str(metric_output) if metric_output else None,
+        )
+        cache_record_output.parent.mkdir(parents=True, exist_ok=True)
+        cache_record_output.write_text(
+            json.dumps(record, indent=2, default=str) + "\n",
+            encoding="utf-8",
+        )
+        console.print(f"[green]Cached run record written:[/green] {cache_record_output}")
 
     console.print(json.dumps(asdict(result), indent=2, default=str))
     if result.status in {"failed", "timed_out"}:

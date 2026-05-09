@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 from claimbench.manifest import ClaimManifest
@@ -49,6 +50,40 @@ def load_cached_run_results(manifest: ClaimManifest) -> list[ExperimentRunResult
     return results
 
 
+def build_cached_run_record(
+    manifest: ClaimManifest,
+    result: ExperimentRunResult,
+    *,
+    run_id: str | None = None,
+    artifact_uri: str | None = None,
+    log_uri: str | None = None,
+    finished_at: str | None = None,
+) -> dict[str, Any]:
+    """Build a manifest-compatible cached_runs record from a run result."""
+
+    experiment = _experiment_by_id(manifest, result.experiment_id)
+    metric_name = _metric_name(experiment["metric_parser"])
+    metrics: dict[str, Any] = {
+        metric_name: result.observed_metric,
+        "runtime_seconds": result.runtime_seconds,
+        "returncode": result.returncode,
+    }
+    if result.error is not None:
+        metrics["error"] = result.error
+
+    record: dict[str, Any] = {
+        "run_id": run_id or _default_run_id(manifest.paper_id, result.experiment_id),
+        "experiment_id": result.experiment_id,
+        "status": _cached_status(result.status),
+        "metrics": metrics,
+        "log_uri": log_uri,
+        "artifact_uris": [artifact_uri] if artifact_uri else [],
+        "started_at": None,
+        "finished_at": finished_at or datetime.now(UTC).replace(microsecond=0).isoformat(),
+    }
+    return record
+
+
 def _observed_metric(metrics: dict[str, Any], parser: dict[str, str]) -> Any | None:
     parser_type = parser["type"]
     target = parser["target"]
@@ -64,6 +99,32 @@ def _observed_metric(metrics: dict[str, Any], parser: dict[str, str]) -> Any | N
     if parser_type == "regex":
         return metrics.get(target)
     return None
+
+
+def _experiment_by_id(manifest: ClaimManifest, experiment_id: str) -> dict[str, Any]:
+    for experiment in manifest.data.get("experiments", []):
+        if experiment["experiment_id"] == experiment_id:
+            return experiment
+    raise KeyError(f"Unknown experiment_id for {manifest.paper_id}: {experiment_id}")
+
+
+def _metric_name(parser: dict[str, str]) -> str:
+    parser_type = parser["type"]
+    target = parser["target"]
+    if parser_type == "json_path" and target.startswith("$."):
+        return target[2:].split(".")[-1]
+    return target
+
+
+def _cached_status(status: str) -> str:
+    if status in {"succeeded", "failed", "timed_out", "partial"}:
+        return status
+    return "succeeded"
+
+
+def _default_run_id(paper_id: str, experiment_id: str) -> str:
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return f"{paper_id}_{experiment_id}_{timestamp}"
 
 
 def _runtime_seconds(metrics: dict[str, Any]) -> float:
