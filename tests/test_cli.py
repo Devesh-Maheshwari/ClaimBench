@@ -218,6 +218,60 @@ def test_run_experiment_cli_writes_cache_record(
     assert record["artifact_uris"] == ["runs/metrics.json"]
 
 
+def test_run_experiment_cli_writes_artifact_bundle(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    artifact_dir = tmp_path / "artifacts"
+    _write_manifest(manifest_path)
+
+    def fake_run_manifest_experiment(
+        manifest: ClaimManifest,
+        experiment_id: str,
+        **kwargs: object,
+    ) -> ExperimentRunResult:
+        return ExperimentRunResult(
+            experiment_id=experiment_id,
+            status="succeeded",
+            command=["python", "run.py"],
+            returncode=0,
+            runtime_seconds=1.2,
+            stdout="hello\n",
+            stderr="warning\n",
+            observed_metric=0.91,
+            verdicts=[],
+        )
+
+    monkeypatch.setattr(
+        "claimbench.cli.run_manifest_experiment",
+        fake_run_manifest_experiment,
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "run-experiment",
+            str(manifest_path),
+            "exp_accuracy",
+            "--workspace",
+            str(tmp_path),
+            "--metric-output",
+            "runs/metrics.json",
+            "--artifact-dir",
+            str(artifact_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Run artifacts written" in result.output
+    assert (artifact_dir / "result.json").exists()
+    assert (artifact_dir / "stdout.txt").read_text(encoding="utf-8") == "hello\n"
+    assert (artifact_dir / "stderr.txt").read_text(encoding="utf-8") == "warning\n"
+    cache_record = json.loads((artifact_dir / "cache_record.json").read_text(encoding="utf-8"))
+    assert cache_record["metrics"]["accuracy"] == 0.91
+
+
 def test_import_cache_record_cli_appends_record(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     record_path = tmp_path / "record.json"

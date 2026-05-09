@@ -23,6 +23,7 @@ from claimbench.mcp_server import McpDependencyError, run_mcp_server
 from claimbench.onboarding import init_paper_manifest
 from claimbench.report import generate_reproducibility_report, report_to_dict, report_to_markdown
 from claimbench.repo_scanner import scan_repository
+from claimbench.runner.artifacts import write_run_artifacts
 from claimbench.runner.docker_runner import run_manifest_experiment_in_docker
 from claimbench.runner.executor import run_manifest_experiment
 from claimbench.storage.cached_runs import (
@@ -331,6 +332,13 @@ def run_experiment(
             help="Optional path to write a manifest cached_runs record for this run.",
         ),
     ] = None,
+    artifact_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--artifact-dir",
+            help="Optional directory to write result.json, stdout/stderr logs, and cache_record.json.",
+        ),
+    ] = None,
 ) -> None:
     """Run a manifest experiment and print the captured result."""
 
@@ -374,6 +382,16 @@ def run_experiment(
             encoding="utf-8",
         )
         console.print(f"[green]Cached run record written:[/green] {cache_record_output}")
+
+    if artifact_dir is not None:
+        artifact_summary = write_run_artifacts(
+            manifest,
+            result,
+            artifact_dir,
+            metric_output_path=metric_output,
+        )
+        console.print(f"[green]Run artifacts written:[/green] {artifact_dir}")
+        console.print(json.dumps(artifact_summary, indent=2, default=str))
 
     console.print(json.dumps(asdict(result), indent=2, default=str))
     if result.status in {"failed", "timed_out"}:
