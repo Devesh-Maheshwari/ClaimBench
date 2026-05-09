@@ -19,6 +19,7 @@ from claimbench.manifest import (
     load_json,
     validate_manifest_data,
 )
+from claimbench.mcp_server import McpDependencyError, run_mcp_server
 from claimbench.onboarding import init_paper_manifest
 from claimbench.report import generate_reproducibility_report, report_to_dict, report_to_markdown
 from claimbench.repo_scanner import scan_repository
@@ -245,6 +246,22 @@ def agent_tool(
         raise typer.Exit(1) from exc
 
     print(json.dumps(payload, indent=2, default=str))
+
+
+@app.command("mcp-server")
+def mcp_server(
+    root: Annotated[
+        Path,
+        typer.Option("--root", help="Directory containing *.manifest.json files."),
+    ] = Path("examples/manifests"),
+) -> None:
+    """Run the ClaimBench MCP server over stdio."""
+
+    try:
+        run_mcp_server(root)
+    except McpDependencyError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
 
 
 @app.command("run-experiment")

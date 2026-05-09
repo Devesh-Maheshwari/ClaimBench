@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from claimbench.cli import app
 from claimbench.manifest import ClaimManifest
+from claimbench.mcp_server import McpDependencyError
 from claimbench.runner.executor import ExperimentRunResult
 
 runner = CliRunner()
@@ -259,3 +260,15 @@ def test_agent_tool_cli_rejects_missing_required_options() -> None:
 
     assert result.exit_code == 1
     assert "--manifest is required" in result.output
+
+
+def test_mcp_server_cli_reports_missing_optional_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_run_mcp_server(root: Path) -> None:
+        raise McpDependencyError("Install it with: pip install -e '.[mcp]'")
+
+    monkeypatch.setattr("claimbench.cli.run_mcp_server", fake_run_mcp_server)
+
+    result = runner.invoke(app, ["mcp-server"])
+
+    assert result.exit_code == 1
+    assert "pip install -e" in result.output
