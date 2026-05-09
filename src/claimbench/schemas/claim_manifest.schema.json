@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claimbench.local/schemas/claim_manifest.schema.json",
+  "title": "ClaimBench ClaimManifest",
+  "type": "object",
+  "required": ["schema_version", "paper", "claims", "experiments", "environment", "datasets", "provenance"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "paper": {
+      "type": "object",
+      "required": ["paper_id", "title", "arxiv_id", "repo_url", "repo_commit", "domain"],
+      "additionalProperties": false,
+      "properties": {
+        "paper_id": { "type": "string" },
+        "title": { "type": "string" },
+        "arxiv_id": { "type": "string" },
+        "paper_url": { "type": "string" },
+        "repo_url": { "type": "string" },
+        "repo_commit": { "type": "string" },
+        "domain": { "type": "string" },
+        "license": { "type": ["string", "null"] },
+        "hardware_profile": { "type": "string" }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "claim_id",
+          "text",
+          "claim_type",
+          "paper_location",
+          "expected_metric",
+          "tolerance",
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "claim_id": { "type": "string" },
+          "text": { "type": "string" },
+          "claim_type": {
+            "type": "string",
+            "enum": ["numeric_metric", "comparison", "ablation", "qualitative"]
+          },
+          "paper_location": { "type": "string" },
+          "evidence_snippet": { "type": "string" },
+          "expected_metric": {
+            "type": "object",
+            "required": ["name", "value"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": ["number", "string"] },
+              "unit": { "type": ["string", "null"] },
+              "higher_is_better": { "type": ["boolean", "null"] }
+            }
+          },
+          "tolerance": {
+            "type": "object",
+            "required": ["type", "value"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "type": "string", "enum": ["absolute", "relative", "exact", "manual"] },
+              "value": { "type": ["number", "string"] },
+              "rationale": { "type": "string" }
+            }
+          },
+          "linked_experiment_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": ["unverified_candidate", "needs_review", "executable", "reproduced", "partial", "failed"]
+          }
+        }
+      }
+    },
+    "experiments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["experiment_id", "command", "metric_parser", "linked_claim_ids"],
+        "additionalProperties": false,
+        "properties": {
+          "experiment_id": { "type": "string" },
+          "name": { "type": "string" },
+          "command": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "working_directory": { "type": "string" },
+          "expected_runtime_seconds": { "type": ["integer", "null"], "minimum": 0 },
+          "metric_parser": {
+            "type": "object",
+            "required": ["type", "target"],
+            "additionalProperties": false,
+            "properties": {
+              "type": { "type": "string", "enum": ["regex", "json_path", "csv_column", "custom"] },
+              "target": { "type": "string" }
+            }
+          },
+          "linked_claim_ids": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "dataset_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["execution_mode", "base_image", "python_version"],
+      "additionalProperties": false,
+      "properties": {
+        "execution_mode": { "type": "string", "enum": ["docker", "cached_replay", "manual"] },
+        "base_image": { "type": "string" },
+        "python_version": { "type": "string" },
+        "cuda_version": { "type": ["string", "null"] },
+        "dependency_files": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "image_digest": { "type": ["string", "null"] }
+      }
+    },
+    "datasets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["dataset_id", "name", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "dataset_id": { "type": "string" },
+          "name": { "type": "string" },
+          "source": { "type": "string" },
+          "version": { "type": ["string", "null"] },
+          "sha256": { "type": ["string", "null"] },
+          "access_notes": { "type": "string" }
+        }
+      }
+    },
+    "cached_runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["run_id", "experiment_id", "status", "metrics"],
+        "additionalProperties": false,
+        "properties": {
+          "run_id": { "type": "string" },
+          "experiment_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["succeeded", "failed", "partial", "timed_out"] },
+          "metrics": { "type": "object" },
+          "log_uri": { "type": ["string", "null"] },
+          "artifact_uris": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "started_at": { "type": ["string", "null"] },
+          "finished_at": { "type": ["string", "null"] }
+        }
+      },
+      "default": []
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["created_by", "created_at", "review_status"],
+      "additionalProperties": false,
+      "properties": {
+        "created_by": { "type": "string" },
+        "created_at": { "type": "string" },
+        "extraction_model": { "type": ["string", "null"] },
+        "parser_version": { "type": ["string", "null"] },
+        "manual_edits": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "review_status": { "type": "string", "enum": ["draft", "reviewed", "locked"] }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unresolved_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

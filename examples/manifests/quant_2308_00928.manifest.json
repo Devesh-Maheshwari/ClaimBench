@@ -1,0 +1,139 @@
+{
+  "schema_version": "0.1.0",
+  "paper": {
+    "paper_id": "quant_2308_00928",
+    "title": "QUANT: A Minimalist Interval Method for Time Series Classification",
+    "arxiv_id": "2308.00928",
+    "paper_url": "https://arxiv.org/abs/2308.00928",
+    "repo_url": "https://github.com/angus924/quant",
+    "repo_commit": "f3907f7e531b6a304e3c54310869a0023a9e0fd6",
+    "domain": "time_series_classification",
+    "license": null,
+    "hardware_profile": "cpu"
+  },
+  "claims": [
+    {
+      "claim_id": "quant_claim_full_ucr_runtime",
+      "text": "QUANT achieves state-of-the-art accuracy on 142 UCR datasets with less than 15 minutes total compute time using a single CPU core.",
+      "claim_type": "numeric_metric",
+      "paper_location": "Abstract / README summary",
+      "evidence_snippet": "QUANT achieves state-of-the-art accuracy on the expanded set of 142 datasets in the UCR archive with a total compute time (training and inference) of less than 15 minutes using a single CPU core.",
+      "expected_metric": {
+        "name": "total_runtime_minutes",
+        "value": 15,
+        "unit": "minutes",
+        "higher_is_better": false
+      },
+      "tolerance": {
+        "type": "manual",
+        "value": "hardware-dependent",
+        "rationale": "Full-archive runtime depends on CPU, dataset storage, and dependency versions. Public demo should use cached evidence or a reduced benchmark."
+      },
+      "linked_experiment_ids": [
+        "quant_exp_single_dataset"
+      ],
+      "confidence": 0.9,
+      "status": "needs_review"
+    },
+    {
+      "claim_id": "quant_claim_minimal_features",
+      "text": "QUANT uses quantile features, fixed intervals, and an off-the-shelf classifier to match the average accuracy of the most accurate interval methods.",
+      "claim_type": "comparison",
+      "paper_location": "Abstract / README summary",
+      "evidence_snippet": "This distillation of interval-based approaches represents a fast and accurate method for time series classification.",
+      "expected_metric": {
+        "name": "single_dataset_accuracy",
+        "value": "to_be_measured",
+        "unit": "accuracy",
+        "higher_is_better": true
+      },
+      "tolerance": {
+        "type": "manual",
+        "value": "dataset-specific",
+        "rationale": "A single-dataset public demo can verify the pipeline and local metric, while full average-accuracy comparison should be cached or evaluated offline."
+      },
+      "linked_experiment_ids": [
+        "quant_exp_single_dataset"
+      ],
+      "confidence": 0.85,
+      "status": "needs_review"
+    }
+  ],
+  "experiments": [
+    {
+      "experiment_id": "quant_exp_single_dataset",
+      "name": "Single UCR dataset QUANT pipeline",
+      "command": [
+        "python",
+        "scripts/run_quant_single_dataset.py",
+        "--dataset",
+        "Coffee",
+        "--output",
+        "./runs/quant_single_dataset/metrics.json"
+      ],
+      "working_directory": ".",
+      "expected_runtime_seconds": null,
+      "metric_parser": {
+        "type": "json_path",
+        "target": "$.accuracy"
+      },
+      "linked_claim_ids": [
+        "quant_claim_full_ucr_runtime",
+        "quant_claim_minimal_features"
+      ],
+      "dataset_ids": [
+        "ucr_coffee"
+      ]
+    }
+  ],
+  "environment": {
+    "execution_mode": "docker",
+    "base_image": "python:3.10-slim",
+    "python_version": "3.10",
+    "cuda_version": null,
+    "dependency_files": [
+      "requirements.txt"
+    ],
+    "image_digest": null
+  },
+  "datasets": [
+    {
+      "dataset_id": "ucr_archive",
+      "name": "UCR Time Series Classification Archive",
+      "source": "https://www.cs.ucr.edu/~eamonn/time_series_data/",
+      "version": null,
+      "sha256": null,
+      "access_notes": "Use only selected small datasets for public demo runs."
+    },
+    {
+      "dataset_id": "ucr_coffee",
+      "name": "UCR Coffee dataset",
+      "source": "https://www.cs.ucr.edu/~eamonn/time_series_data/",
+      "version": null,
+      "sha256": null,
+      "access_notes": "Candidate first dataset for a small end-to-end verification run."
+    }
+  ],
+  "cached_runs": [],
+  "provenance": {
+    "created_by": "ClaimBench Week 2 manual review",
+    "created_at": "2026-05-08",
+    "extraction_model": null,
+    "parser_version": null,
+    "manual_edits": [
+      "Initial manifest drafted from arXiv metadata and official repository README.",
+      "Claims are marked needs_review until exact dataset, commands, and expected metrics are locked."
+    ],
+    "review_status": "draft"
+  },
+  "validation": {
+    "unresolved_fields": [
+      "exact public-demo dataset",
+      "expected single-dataset accuracy",
+      "runtime tolerance",
+      "dependency lockfile",
+      "Docker image digest"
+    ],
+    "notes": "This draft is suitable for manifest loading, dashboard rendering, and later runner implementation."
+  }
+}

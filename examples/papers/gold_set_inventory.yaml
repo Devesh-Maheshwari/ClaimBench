@@ -1,0 +1,120 @@
+selection_goal:
+  domain: time_series_classification
+  target_gold_set_size: 3
+  minimum_verified_claims_per_paper: 1
+  preferred_hardware: cpu_or_single_consumer_gpu
+
+selection_rules:
+  must_have:
+    - public_paper_url
+    - public_code_repository
+    - pinned_or_identifiable_repo_commit
+    - clear_numeric_or_comparison_claim
+    - feasible_dataset_access
+    - runnable_eval_or_small_training_command
+  reject_if:
+    - requires_large_training_from_scratch
+    - requires_private_data
+    - requires_expensive_multi_gpu_hardware
+    - claims_are_only_qualitative
+    - repo_has_no_clear_entrypoint
+
+candidate_papers:
+  - paper_id: rocket_1910_13051
+    title: "ROCKET: Exceptionally Fast and Accurate Time Series Classification Using Random Convolutional Kernels"
+    arxiv_id: "1910.13051"
+    paper_url: "https://arxiv.org/abs/1910.13051"
+    repo_url: "https://github.com/angus924/rocket"
+    repo_commit: "36bd908b4f38e9ea8ca1a3ee6caaf71d405faf86"
+    domain: time_series_classification
+    dataset: "UCR archive; start with one small UCR dataset for the public demo"
+    hardware_estimate: "CPU feasible; full archive is longer, single-dataset verification should be lightweight"
+    candidate_claims:
+      - claim_text: "ROCKET can train and test a classifier on all 85 UCR bake-off datasets in less than 2 hours."
+        paper_location: "Abstract / README summary"
+        expected_metric: "total_runtime < 2 hours on all 85 UCR bake-off datasets"
+        likely_command: "python code/reproduce_experiments_ucr.py -d <dataset_names.txt> -i <ucr_path> -o <output_path> -n 1 -k 1000"
+        feasibility: "needs_review_full_claim_too_large_for_public_demo"
+      - claim_text: "ROCKET provides a fast, accurate transform using 10,000 random convolutional kernels with a linear classifier."
+        paper_location: "Method / README example"
+        expected_metric: "single-dataset accuracy and runtime from reproduced result"
+        likely_command: "single-dataset wrapper around code/rocket_functions.py"
+        feasibility: "good_for_first_end_to_end_claim"
+    notes: >
+      Use this as the first implementation target because the repository has
+      explicit reproduction scripts and simple dependencies: Python, Numba,
+      NumPy, and scikit-learn. For the public demo, verify a reduced
+      single-dataset claim rather than the full 85-dataset runtime claim.
+
+  - paper_id: minirocket_2012_08791
+    title: "MINIROCKET: A Very Fast (Almost) Deterministic Transform for Time Series Classification"
+    arxiv_id: "2012.08791"
+    paper_url: "https://arxiv.org/abs/2012.08791"
+    repo_url: "https://github.com/angus924/minirocket"
+    repo_commit: "0b1c245d9c9dbc50886f28bc7b32d5d45b5663d6"
+    domain: time_series_classification
+    dataset: "UCR archive; start with one small UCR dataset for the public demo"
+    hardware_estimate: "CPU feasible; designed for fast CPU execution"
+    candidate_claims:
+      - claim_text: "MINIROCKET is up to 75 times faster than ROCKET on larger datasets while maintaining essentially the same accuracy."
+        paper_location: "Abstract / README summary"
+        expected_metric: "speedup vs ROCKET on selected dataset or documented benchmark"
+        likely_command: "paired single-dataset benchmark using code/minirocket.py and ROCKET baseline"
+        feasibility: "needs_review_comparison_claim_requires_careful_runtime_control"
+      - claim_text: "MINIROCKET can train and test on all 109 UCR datasets to state-of-the-art accuracy in less than 10 minutes."
+        paper_location: "Abstract / README summary"
+        expected_metric: "total_runtime < 10 minutes on full UCR archive"
+        likely_command: "repository reproduction script or custom UCR loop"
+        feasibility: "too_large_for_public_demo_good_for_cached_claim"
+      - claim_text: "MINIROCKET is almost deterministic and does not require input time series normalization."
+        paper_location: "README important notes"
+        expected_metric: "repeat-run metric stability on one small dataset"
+        likely_command: "single-dataset wrapper around code/minirocket.py"
+        feasibility: "good_for_dashboard_cached_demo"
+    notes: >
+      This is a strong second paper because it naturally compares against
+      ROCKET and gives the demo a clear story: claim-level auditing can inspect
+      both accuracy and runtime claims, not only final accuracy.
+
+  - paper_id: quant_2308_00928
+    title: "QUANT: A Minimalist Interval Method for Time Series Classification"
+    arxiv_id: "2308.00928"
+    paper_url: "https://arxiv.org/abs/2308.00928"
+    repo_url: "https://github.com/angus924/quant"
+    repo_commit: "f3907f7e531b6a304e3c54310869a0023a9e0fd6"
+    domain: time_series_classification
+    dataset: "UCR archive; start with one small UCR dataset for the public demo"
+    hardware_estimate: "CPU feasible; README claims full benchmark under 15 minutes on one CPU core"
+    candidate_claims:
+      - claim_text: "QUANT achieves state-of-the-art accuracy on 142 UCR datasets with less than 15 minutes total compute time using a single CPU core."
+        paper_location: "Abstract / README summary"
+        expected_metric: "total_runtime < 15 minutes on full 142-dataset UCR benchmark"
+        likely_command: "custom or documented benchmark runner using code/quant.py"
+        feasibility: "too_large_for_public_live_demo_good_for_cached_audit"
+      - claim_text: "QUANT uses quantile features, fixed intervals, and an off-the-shelf classifier to match the average accuracy of the most accurate interval methods."
+        paper_location: "Abstract / README summary"
+        expected_metric: "single-dataset accuracy from Quant + ExtraTreesClassifier pipeline"
+        likely_command: "single-dataset wrapper around code/quant.py"
+        feasibility: "good_for_one_claim_verification_after_runner_exists"
+    notes: >
+      This gives the gold set a third method with a different feature family
+      while keeping the domain, datasets, and evaluation style consistent.
+      It is useful for demonstrating that ClaimBench can audit a family of
+      related papers without becoming a generic paper-agent clone.
+
+scoring_rubric:
+  repo_runnability:
+    weight: 30
+    description: Clear setup, dependencies, and executable evaluation path.
+  claim_clarity:
+    weight: 25
+    description: Numeric or comparison claim with table/section evidence.
+  compute_feasibility:
+    weight: 20
+    description: Can run on CPU or a small single GPU in reasonable time.
+  demo_value:
+    weight: 15
+    description: Recruiter can understand why this claim matters.
+  failure_learning_value:
+    weight: 10
+    description: Failure or partial reproduction would produce useful analysis.

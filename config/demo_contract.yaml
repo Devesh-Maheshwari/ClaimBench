@@ -1,0 +1,56 @@
+product:
+  name: ClaimBench
+  tagline: Reproducibility Auditor for ML Papers
+  positioning: >
+    A claim-level reproducibility auditor for selected ML papers with public
+    code. ClaimBench verifies reported results from sandboxed runs and produces
+    failure-aware evidence reports.
+
+public_demo:
+  hosting_target: Hugging Face Spaces
+  default_mode: cached_replay
+  live_execution_policy: whitelisted_lightweight_only
+  arbitrary_repo_execution: false
+  target_user_flow:
+    - select_curated_paper
+    - inspect_claims_table
+    - verify_selected_claim
+    - inspect_expected_vs_observed_metrics
+    - inspect_command_environment_logs_and_artifacts
+    - open_reproducibility_report
+
+local_product:
+  arbitrary_repo_execution: sandboxed_reviewed_only
+  supports_new_paper_onboarding: true
+  onboarding_flow:
+    - ingest_arxiv_and_repo_metadata
+    - scan_repository_setup_and_entrypoints
+    - propose_candidate_claims
+    - propose_candidate_experiments
+    - generate_draft_claim_manifest
+    - validate_manifest
+    - require_user_review_for_unresolved_fields
+    - run_approved_experiments_in_sandbox
+
+dashboard_tabs:
+  - overview
+  - claims
+  - verification
+  - evidence
+  - report
+  - agent_qna
+
+success_criteria:
+  curated_papers: 3
+  unseen_paper_onboarding_smoke_tests: 1
+  minimum_verified_claims_per_paper: 1
+  public_demo_requires_local_setup: false
+  cached_runs_required: true
+  reproducibility_report_required: true
+  local_mcp_interface_required: true
+
+non_goals:
+  - guarantee_arbitrary_paper_reproduction
+  - run_public_user_supplied_repositories
+  - chatbot_only_demo
+  - compete_with_general_paper_to_agent_systems

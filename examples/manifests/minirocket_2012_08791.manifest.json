@@ -1,0 +1,165 @@
+{
+  "schema_version": "0.1.0",
+  "paper": {
+    "paper_id": "minirocket_2012_08791",
+    "title": "MINIROCKET: A Very Fast (Almost) Deterministic Transform for Time Series Classification",
+    "arxiv_id": "2012.08791",
+    "paper_url": "https://arxiv.org/abs/2012.08791",
+    "repo_url": "https://github.com/angus924/minirocket",
+    "repo_commit": "0b1c245d9c9dbc50886f28bc7b32d5d45b5663d6",
+    "domain": "time_series_classification",
+    "license": null,
+    "hardware_profile": "cpu"
+  },
+  "claims": [
+    {
+      "claim_id": "minirocket_claim_full_ucr_runtime",
+      "text": "MINIROCKET can train and test classifiers on all 109 UCR datasets to state-of-the-art accuracy in less than 10 minutes.",
+      "claim_type": "numeric_metric",
+      "paper_location": "Abstract / README summary",
+      "evidence_snippet": "Using this method, it is possible to train and test a classifier on all of 109 datasets from the UCR archive to state-of-the-art accuracy in less than 10 minutes.",
+      "expected_metric": {
+        "name": "total_runtime_minutes",
+        "value": 10,
+        "unit": "minutes",
+        "higher_is_better": false
+      },
+      "tolerance": {
+        "type": "manual",
+        "value": "hardware-dependent",
+        "rationale": "Full-archive runtime depends on CPU, dataset storage, and dependency versions. Public demo should use cached evidence or a reduced benchmark."
+      },
+      "linked_experiment_ids": [
+        "minirocket_exp_ucr_reduced"
+      ],
+      "confidence": 0.9,
+      "status": "needs_review"
+    },
+    {
+      "claim_id": "minirocket_claim_repeatability",
+      "text": "MINIROCKET is almost deterministic while maintaining essentially the same accuracy as ROCKET.",
+      "claim_type": "comparison",
+      "paper_location": "Abstract / README summary",
+      "evidence_snippet": "We reformulate ROCKET into a new method, MINIROCKET, making it up to 75 times faster on larger datasets, and making it almost deterministic.",
+      "expected_metric": {
+        "name": "repeat_run_accuracy_delta",
+        "value": "to_be_measured",
+        "unit": "accuracy_delta",
+        "higher_is_better": false
+      },
+      "tolerance": {
+        "type": "manual",
+        "value": "dataset-specific",
+        "rationale": "Repeatability should be checked on a locked single-dataset setup before the claim is promoted from needs_review."
+      },
+      "linked_experiment_ids": [
+        "minirocket_exp_repeatability"
+      ],
+      "confidence": 0.85,
+      "status": "needs_review"
+    }
+  ],
+  "experiments": [
+    {
+      "experiment_id": "minirocket_exp_ucr_reduced",
+      "name": "Reduced UCR MINIROCKET reproduction run",
+      "command": [
+        "python",
+        "scripts/run_minirocket_single_dataset.py",
+        "--dataset",
+        "Coffee",
+        "--output",
+        "./runs/minirocket_single_dataset/metrics.json"
+      ],
+      "working_directory": ".",
+      "expected_runtime_seconds": null,
+      "metric_parser": {
+        "type": "json_path",
+        "target": "$.runtime_seconds"
+      },
+      "linked_claim_ids": [
+        "minirocket_claim_full_ucr_runtime"
+      ],
+      "dataset_ids": [
+        "ucr_coffee"
+      ]
+    },
+    {
+      "experiment_id": "minirocket_exp_repeatability",
+      "name": "Single UCR dataset MINIROCKET repeatability run",
+      "command": [
+        "python",
+        "scripts/run_minirocket_repeatability.py",
+        "--dataset",
+        "Coffee",
+        "--runs",
+        "3",
+        "--output",
+        "./runs/minirocket_repeatability/metrics.json"
+      ],
+      "working_directory": ".",
+      "expected_runtime_seconds": null,
+      "metric_parser": {
+        "type": "json_path",
+        "target": "$.max_accuracy_delta"
+      },
+      "linked_claim_ids": [
+        "minirocket_claim_repeatability"
+      ],
+      "dataset_ids": [
+        "ucr_coffee"
+      ]
+    }
+  ],
+  "environment": {
+    "execution_mode": "docker",
+    "base_image": "python:3.10-slim",
+    "python_version": "3.10",
+    "cuda_version": null,
+    "dependency_files": [
+      "requirements.txt"
+    ],
+    "image_digest": null
+  },
+  "datasets": [
+    {
+      "dataset_id": "ucr_archive",
+      "name": "UCR Time Series Classification Archive",
+      "source": "https://www.cs.ucr.edu/~eamonn/time_series_data/",
+      "version": null,
+      "sha256": null,
+      "access_notes": "Use only selected small datasets for public demo runs."
+    },
+    {
+      "dataset_id": "ucr_coffee",
+      "name": "UCR Coffee dataset",
+      "source": "https://www.cs.ucr.edu/~eamonn/time_series_data/",
+      "version": null,
+      "sha256": null,
+      "access_notes": "Candidate first dataset for a small end-to-end verification run."
+    }
+  ],
+  "cached_runs": [],
+  "provenance": {
+    "created_by": "ClaimBench Week 2 manual review",
+    "created_at": "2026-05-08",
+    "extraction_model": null,
+    "parser_version": null,
+    "manual_edits": [
+      "Initial manifest drafted from arXiv metadata and official repository README.",
+      "Claims are marked needs_review until exact dataset, commands, and expected metrics are locked."
+    ],
+    "review_status": "draft"
+  },
+  "validation": {
+    "unresolved_fields": [
+      "exact public-demo dataset",
+      "expected repeatability threshold",
+      "expected single-dataset accuracy",
+      "runtime tolerance",
+      "dependency lockfile",
+      "Docker image digest"
+    ],
+    "notes": "This draft is suitable for manifest loading, dashboard rendering, and later runner implementation."
+  }
+}

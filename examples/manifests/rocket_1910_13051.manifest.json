@@ -1,0 +1,170 @@
+{
+  "schema_version": "0.1.0",
+  "paper": {
+    "paper_id": "rocket_1910_13051",
+    "title": "ROCKET: Exceptionally Fast and Accurate Time Series Classification Using Random Convolutional Kernels",
+    "arxiv_id": "1910.13051",
+    "paper_url": "https://arxiv.org/abs/1910.13051",
+    "repo_url": "https://github.com/angus924/rocket",
+    "repo_commit": "36bd908b4f38e9ea8ca1a3ee6caaf71d405faf86",
+    "domain": "time_series_classification",
+    "license": null,
+    "hardware_profile": "cpu"
+  },
+  "claims": [
+    {
+      "claim_id": "rocket_claim_full_ucr_runtime",
+      "text": "ROCKET can train and test a classifier on all 85 UCR bake-off datasets in less than 2 hours.",
+      "claim_type": "numeric_metric",
+      "paper_location": "Abstract / README summary",
+      "evidence_snippet": "Using this method, it is possible to train and test a classifier on all 85 bake off datasets in the UCR archive in < 2 h.",
+      "expected_metric": {
+        "name": "total_runtime_hours",
+        "value": 2,
+        "unit": "hours",
+        "higher_is_better": false
+      },
+      "tolerance": {
+        "type": "manual",
+        "value": "hardware-dependent",
+        "rationale": "Full-archive runtime depends on CPU, dataset storage, and dependency versions. Public demo should use cached evidence or a reduced benchmark."
+      },
+      "linked_experiment_ids": [
+        "rocket_exp_ucr_reduced"
+      ],
+      "confidence": 0.9,
+      "status": "needs_review"
+    },
+    {
+      "claim_id": "rocket_claim_single_dataset_pipeline",
+      "text": "ROCKET transforms time series with random convolutional kernels and trains a linear classifier for fast classification.",
+      "claim_type": "numeric_metric",
+      "paper_location": "Method / README example",
+      "evidence_snippet": "The README example uses generate_kernels, apply_kernels, and RidgeClassifierCV to train and evaluate a classifier.",
+      "expected_metric": {
+        "name": "single_dataset_accuracy",
+        "value": "to_be_measured",
+        "unit": "accuracy",
+        "higher_is_better": true
+      },
+      "tolerance": {
+        "type": "manual",
+        "value": "dataset-specific",
+        "rationale": "This claim is intended as the first end-to-end implementation target. Expected value should be locked after selecting the exact UCR dataset."
+      },
+      "linked_experiment_ids": [
+        "rocket_exp_single_dataset"
+      ],
+      "confidence": 0.85,
+      "status": "needs_review"
+    }
+  ],
+  "experiments": [
+    {
+      "experiment_id": "rocket_exp_ucr_reduced",
+      "name": "Reduced UCR reproduction run",
+      "command": [
+        "python",
+        "code/reproduce_experiments_ucr.py",
+        "-d",
+        "selected_ucr_datasets.txt",
+        "-i",
+        "./data/UCR",
+        "-o",
+        "./runs/rocket",
+        "-n",
+        "1",
+        "-k",
+        "1000"
+      ],
+      "working_directory": ".",
+      "expected_runtime_seconds": null,
+      "metric_parser": {
+        "type": "csv_column",
+        "target": "runtime_seconds"
+      },
+      "linked_claim_ids": [
+        "rocket_claim_full_ucr_runtime"
+      ],
+      "dataset_ids": [
+        "ucr_archive"
+      ]
+    },
+    {
+      "experiment_id": "rocket_exp_single_dataset",
+      "name": "Single UCR dataset ROCKET pipeline",
+      "command": [
+        "python",
+        "scripts/run_rocket_single_dataset.py",
+        "--dataset",
+        "Coffee",
+        "--num-kernels",
+        "1000",
+        "--output",
+        "./runs/rocket_single_dataset/metrics.json"
+      ],
+      "working_directory": ".",
+      "expected_runtime_seconds": null,
+      "metric_parser": {
+        "type": "json_path",
+        "target": "$.accuracy"
+      },
+      "linked_claim_ids": [
+        "rocket_claim_single_dataset_pipeline"
+      ],
+      "dataset_ids": [
+        "ucr_coffee"
+      ]
+    }
+  ],
+  "environment": {
+    "execution_mode": "docker",
+    "base_image": "python:3.10-slim",
+    "python_version": "3.10",
+    "cuda_version": null,
+    "dependency_files": [
+      "requirements.txt"
+    ],
+    "image_digest": null
+  },
+  "datasets": [
+    {
+      "dataset_id": "ucr_archive",
+      "name": "UCR Time Series Classification Archive",
+      "source": "https://www.cs.ucr.edu/~eamonn/time_series_data/",
+      "version": null,
+      "sha256": null,
+      "access_notes": "Use only selected small datasets for public demo runs."
+    },
+    {
+      "dataset_id": "ucr_coffee",
+      "name": "UCR Coffee dataset",
+      "source": "https://www.cs.ucr.edu/~eamonn/time_series_data/",
+      "version": null,
+      "sha256": null,
+      "access_notes": "Candidate first dataset for a small end-to-end verification run."
+    }
+  ],
+  "cached_runs": [],
+  "provenance": {
+    "created_by": "ClaimBench Week 1 manual review",
+    "created_at": "2026-05-03",
+    "extraction_model": null,
+    "parser_version": null,
+    "manual_edits": [
+      "Initial manifest drafted from arXiv metadata and official repository README.",
+      "Claims are marked needs_review until exact dataset, commands, and expected metrics are locked."
+    ],
+    "review_status": "draft"
+  },
+  "validation": {
+    "unresolved_fields": [
+      "exact public-demo dataset",
+      "expected single-dataset accuracy",
+      "runtime tolerance",
+      "dependency lockfile",
+      "Docker image digest"
+    ],
+    "notes": "This draft is suitable for Week 1 planning and Week 2 schema/dashboard work, not final reproducibility reporting."
+  }
+}
