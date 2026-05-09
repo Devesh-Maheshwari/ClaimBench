@@ -218,6 +218,42 @@ def test_run_experiment_cli_writes_cache_record(
     assert record["artifact_uris"] == ["runs/metrics.json"]
 
 
+def test_import_cache_record_cli_appends_record(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    record_path = tmp_path / "record.json"
+    _write_manifest(manifest_path)
+    record_path.write_text(
+        json.dumps(
+            {
+                "run_id": "fixture_new_cached_accuracy",
+                "experiment_id": "exp_accuracy",
+                "status": "succeeded",
+                "metrics": {
+                    "accuracy": 0.92,
+                    "runtime_seconds": 1.1,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "import-cache-record",
+            str(manifest_path),
+            str(record_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["action"] == "added"
+    assert payload["num_cached_runs"] == 2
+    updated = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert updated["cached_runs"][-1]["run_id"] == "fixture_new_cached_accuracy"
+
+
 def test_run_experiment_cli_rejects_unknown_sandbox(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     _write_manifest(manifest_path)

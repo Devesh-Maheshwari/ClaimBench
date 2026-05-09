@@ -25,7 +25,11 @@ from claimbench.report import generate_reproducibility_report, report_to_dict, r
 from claimbench.repo_scanner import scan_repository
 from claimbench.runner.docker_runner import run_manifest_experiment_in_docker
 from claimbench.runner.executor import run_manifest_experiment
-from claimbench.storage.cached_runs import build_cached_run_record, load_cached_run_results
+from claimbench.storage.cached_runs import (
+    build_cached_run_record,
+    import_cached_run_record,
+    load_cached_run_results,
+)
 from claimbench.tools.local import (
     cached_report_tool,
     claim_evidence_tool,
@@ -262,6 +266,26 @@ def mcp_server(
     except McpDependencyError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
+
+
+@app.command("import-cache-record")
+def import_cache_record(
+    manifest_path: Annotated[Path, typer.Argument(help="Path to a ClaimManifest JSON file.")],
+    record_path: Annotated[Path, typer.Argument(help="Path to a cached run record JSON file.")],
+    replace: Annotated[
+        bool,
+        typer.Option("--replace", help="Replace an existing cached run with the same run_id."),
+    ] = False,
+) -> None:
+    """Import a cached run record into a manifest cached_runs list."""
+
+    try:
+        result = import_cached_run_record(manifest_path, record_path, replace=replace)
+    except (ManifestError, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    print(json.dumps(result, indent=2, default=str))
 
 
 @app.command("run-experiment")

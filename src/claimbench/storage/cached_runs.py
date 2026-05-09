@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
-from claimbench.manifest import ClaimManifest
+from claimbench.manifest import ClaimManifest, load_json, validate_manifest_data
 from claimbench.runner.executor import ExperimentRunResult, _linked_claims
 from claimbench.runner.verdict import compute_verdict
 
@@ -84,6 +86,57 @@ def build_cached_run_record(
     return record
 
 
+def import_cached_run_record(
+    manifest_path: Path,
+    record_path: Path,
+    *,
+    replace: bool = False,
+) -> dict[str, Any]:
+    """Import a cached run record JSON file into a manifest."""
+
+    record = load_json(record_path)
+    return import_cached_run_record_data(manifest_path, record, replace=replace)
+
+
+def import_cached_run_record_data(
+    manifest_path: Path,
+    record: dict[str, Any],
+    *,
+    replace: bool = False,
+) -> dict[str, Any]:
+    """Import a cached run record object into a manifest."""
+
+    _validate_cached_run_record(record)
+    data = load_json(manifest_path)
+    cached_runs = list(data.get("cached_runs", []))
+    existing_index = _cached_run_index(cached_runs, record["run_id"])
+
+    if existing_index is not None and not replace:
+        raise ValueError(f"Cached run already exists: {record['run_id']}")
+
+    action = "added"
+    if existing_index is None:
+        cached_runs.append(record)
+    else:
+        cached_runs[existing_index] = record
+        action = "replaced"
+
+    data["cached_runs"] = cached_runs
+    issues = validate_manifest_data(data)
+    if issues:
+        formatted = "\n".join(f"- {issue.path}: {issue.message}" for issue in issues)
+        raise ValueError(f"Updated manifest would be invalid:\n{formatted}")
+
+    manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return {
+        "manifest_path": str(manifest_path),
+        "run_id": record["run_id"],
+        "experiment_id": record["experiment_id"],
+        "action": action,
+        "num_cached_runs": len(cached_runs),
+    }
+
+
 def _observed_metric(metrics: dict[str, Any], parser: dict[str, str]) -> Any | None:
     parser_type = parser["type"]
     target = parser["target"]
@@ -98,6 +151,22 @@ def _observed_metric(metrics: dict[str, Any], parser: dict[str, str]) -> Any | N
         return metrics.get(target)
     if parser_type == "regex":
         return metrics.get(target)
+    return None
+
+
+def _validate_cached_run_record(record: dict[str, Any]) -> None:
+    required = {"run_id", "experiment_id", "status", "metrics"}
+    missing = sorted(required - set(record))
+    if missing:
+        raise ValueError(f"Cached run record is missing required fields: {', '.join(missing)}")
+    if not isinstance(record["metrics"], dict):
+        raise ValueError("Cached run record metrics must be an object.")
+
+
+def _cached_run_index(cached_runs: list[dict[str, Any]], run_id: str) -> int | None:
+    for index, cached_run in enumerate(cached_runs):
+        if cached_run.get("run_id") == run_id:
+            return index
     return None
 
 

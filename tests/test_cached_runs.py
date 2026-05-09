@@ -1,9 +1,20 @@
 from __future__ import annotations
 
-from claimbench.manifest import load_manifest
+import json
+import shutil
+from pathlib import Path
+
+import pytest
+
+from claimbench.manifest import load_json, load_manifest
 from claimbench.paths import EXAMPLE_MANIFESTS_ROOT
 from claimbench.runner.executor import ExperimentRunResult
-from claimbench.storage.cached_runs import build_cached_run_record, load_cached_run_results
+from claimbench.storage.cached_runs import (
+    build_cached_run_record,
+    import_cached_run_record,
+    import_cached_run_record_data,
+    load_cached_run_results,
+)
 
 
 def test_cached_runs_convert_to_runner_results() -> None:
@@ -90,3 +101,61 @@ def test_build_cached_run_record_maps_needs_review_to_succeeded() -> None:
 
     assert record["status"] == "succeeded"
     assert record["metrics"]["accuracy"] == 1.0
+
+
+def test_import_cached_run_record_appends_to_manifest(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "quant.manifest.json"
+    record_path = tmp_path / "record.json"
+    shutil.copyfile(EXAMPLE_MANIFESTS_ROOT / "quant_2308_00928.manifest.json", manifest_path)
+    record = {
+        "run_id": "quant_new_run",
+        "experiment_id": "quant_exp_single_dataset",
+        "status": "succeeded",
+        "metrics": {
+            "accuracy": 0.95,
+            "runtime_seconds": 8.5,
+        },
+    }
+    record_path.write_text(json.dumps(record), encoding="utf-8")
+
+    result = import_cached_run_record(manifest_path, record_path)
+    updated = load_json(manifest_path)
+
+    assert result["action"] == "added"
+    assert result["num_cached_runs"] == 2
+    assert updated["cached_runs"][-1]["run_id"] == "quant_new_run"
+
+
+def test_import_cached_run_record_rejects_duplicate_without_replace(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "quant.manifest.json"
+    shutil.copyfile(EXAMPLE_MANIFESTS_ROOT / "quant_2308_00928.manifest.json", manifest_path)
+    record = {
+        "run_id": "quant_cached_single_dataset_2026_05_09",
+        "experiment_id": "quant_exp_single_dataset",
+        "status": "succeeded",
+        "metrics": {"accuracy": 0.95},
+    }
+
+    with pytest.raises(ValueError, match="already exists"):
+        import_cached_run_record_data(manifest_path, record)
+
+
+def test_import_cached_run_record_replaces_existing_record(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "quant.manifest.json"
+    shutil.copyfile(EXAMPLE_MANIFESTS_ROOT / "quant_2308_00928.manifest.json", manifest_path)
+    record = {
+        "run_id": "quant_cached_single_dataset_2026_05_09",
+        "experiment_id": "quant_exp_single_dataset",
+        "status": "succeeded",
+        "metrics": {
+            "accuracy": 0.95,
+            "runtime_seconds": 8.5,
+        },
+    }
+
+    result = import_cached_run_record_data(manifest_path, record, replace=True)
+    updated = load_json(manifest_path)
+
+    assert result["action"] == "replaced"
+    assert result["num_cached_runs"] == 1
+    assert updated["cached_runs"][0]["metrics"]["accuracy"] == 0.95
