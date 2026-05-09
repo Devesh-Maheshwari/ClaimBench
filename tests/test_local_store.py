@@ -34,5 +34,5 @@ def test_local_store_evidence_and_report_preview() -> None:
 
     assert evidence.claim_id == "quant_claim_full_ucr_runtime"
     assert evidence.command.startswith("python scripts/run_quant_single_dataset.py")
-    assert "ClaimBench Report Preview" in report
+    assert "ClaimBench Report:" in report
     assert "quant_claim_full_ucr_runtime" in report

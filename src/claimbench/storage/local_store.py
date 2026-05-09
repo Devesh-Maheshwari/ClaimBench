@@ -8,6 +8,7 @@ from typing import Any
 
 from claimbench.manifest import ClaimManifest, load_all_manifests
 from claimbench.paths import EXAMPLE_MANIFESTS_ROOT
+from claimbench.report import generate_reproducibility_report, report_to_markdown
 
 
 @dataclass(frozen=True)
@@ -101,36 +102,9 @@ class LocalStore:
         )
 
     def report_preview(self, paper_id: str) -> str:
-        summary = self.paper_summary(paper_id)
         manifest = self.get_manifest(paper_id)
-        lines = [
-            f"# ClaimBench Report Preview: {summary['title']}",
-            "",
-            f"- Paper ID: `{summary['paper_id']}`",
-            f"- arXiv: `{summary['arxiv_id']}`",
-            f"- Repository: `{summary['repo_url']}`",
-            f"- Commit: `{summary['repo_commit']}`",
-            f"- Overall status: `{summary['overall_status']}`",
-            "",
-            "## Claims",
-        ]
-        for claim in manifest.claims:
-            lines.extend(
-                [
-                    f"- `{claim['claim_id']}`: {claim['status']}",
-                    f"  - Expected: {_format_metric(claim['expected_metric'])}",
-                    f"  - Source: {claim['paper_location']}",
-                ]
-            )
-        lines.extend(
-            [
-                "",
-                "## Current Limitation",
-                "",
-                "This is a static manifest preview. Sandboxed execution, parsed metrics, logs, and artifacts are added in the runner phase.",
-            ]
-        )
-        return "\n".join(lines)
+        report = generate_reproducibility_report(manifest)
+        return report_to_markdown(report)
 
 
 def _format_metric(metric: dict[str, Any]) -> str:
