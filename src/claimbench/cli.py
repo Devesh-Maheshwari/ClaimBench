@@ -25,6 +25,12 @@ from claimbench.repo_scanner import scan_repository
 from claimbench.runner.docker_runner import run_manifest_experiment_in_docker
 from claimbench.runner.executor import run_manifest_experiment
 from claimbench.storage.cached_runs import load_cached_run_results
+from claimbench.tools.local import (
+    cached_report_tool,
+    claim_evidence_tool,
+    list_papers_tool,
+    validate_manifest_tool,
+)
 
 
 app = typer.Typer(help="ClaimBench reproducibility auditor CLI.")
@@ -183,6 +189,62 @@ def report(
     else:
         console.print(f"[red]Unsupported report format: {output_format}. Expected 'markdown' or 'json'.[/red]")
         raise typer.Exit(1)
+
+
+@app.command("agent-tool")
+def agent_tool(
+    tool_name: Annotated[
+        str,
+        typer.Argument(help="Tool name: list-papers, validate-manifest, claim-evidence, or cached-report."),
+    ],
+    manifest_path: Annotated[
+        Path | None,
+        typer.Option("--manifest", help="Manifest path for validate-manifest or cached-report."),
+    ] = None,
+    paper_id: Annotated[
+        str | None,
+        typer.Option("--paper-id", help="Paper ID for claim-evidence or cached-report."),
+    ] = None,
+    claim_id: Annotated[
+        str | None,
+        typer.Option("--claim-id", help="Optional claim ID for claim-evidence."),
+    ] = None,
+    root: Annotated[
+        Path,
+        typer.Option("--root", help="Directory containing *.manifest.json files."),
+    ] = Path("examples/manifests"),
+    output_format: Annotated[
+        str,
+        typer.Option("--format", help="Report output format for cached-report: json or markdown."),
+    ] = "json",
+) -> None:
+    """Run a read-only local agent tool and print JSON."""
+
+    try:
+        if tool_name == "list-papers":
+            payload = list_papers_tool(root)
+        elif tool_name == "validate-manifest":
+            if manifest_path is None:
+                raise ValueError("--manifest is required for validate-manifest.")
+            payload = validate_manifest_tool(manifest_path)
+        elif tool_name == "claim-evidence":
+            if paper_id is None:
+                raise ValueError("--paper-id is required for claim-evidence.")
+            payload = claim_evidence_tool(paper_id, claim_id=claim_id, manifest_root=root)
+        elif tool_name == "cached-report":
+            payload = cached_report_tool(
+                paper_id=paper_id,
+                manifest_path=manifest_path,
+                manifest_root=root,
+                output_format=output_format,
+            )
+        else:
+            raise ValueError(f"Unsupported agent tool: {tool_name}.")
+    except (ManifestError, KeyError, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    print(json.dumps(payload, indent=2, default=str))
 
 
 @app.command("run-experiment")

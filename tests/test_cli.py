@@ -224,3 +224,38 @@ def test_report_cli_rejects_unknown_format(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "Unsupported report format" in result.output
+
+
+def test_agent_tool_cli_lists_papers() -> None:
+    result = runner.invoke(app, ["agent-tool", "list-papers"])
+
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data["papers"][0]["paper_id"] == "minirocket_2012_08791"
+    assert data["papers"][0]["num_cached_runs"] > 0
+
+
+def test_agent_tool_cli_returns_claim_evidence() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "agent-tool",
+            "claim-evidence",
+            "--paper-id",
+            "quant_2308_00928",
+            "--claim-id",
+            "quant_claim_minimal_features",
+        ],
+    )
+
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data["evidence"]["observed_metric"] == "1.0"
+    assert data["evidence"]["verdict"] == "needs_review"
+
+
+def test_agent_tool_cli_rejects_missing_required_options() -> None:
+    result = runner.invoke(app, ["agent-tool", "validate-manifest"])
+
+    assert result.exit_code == 1
+    assert "--manifest is required" in result.output
