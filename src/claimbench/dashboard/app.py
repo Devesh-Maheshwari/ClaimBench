@@ -230,6 +230,22 @@ def build_app():
             "The runner phase adds sandboxed execution, parsed metrics, logs, and artifacts."
         )
         selector = gr.Dropdown(choices=choices, label="Paper", value=choices[0] if choices else None)
+        with gr.Tab("Paper Catalog"):
+            gr.Dataframe(
+                value=store.paper_catalog_rows(),
+                headers=[
+                    "Paper ID",
+                    "Title",
+                    "Overall Status",
+                    "Claims",
+                    "Cached Runs",
+                    "Reproduced",
+                    "Needs Review",
+                    "Repository",
+                ],
+                label="Paper Catalog",
+                interactive=False,
+            )
         with gr.Tab("Overview"):
             overview = gr.Markdown(label="Overview")
             summary = gr.JSON(label="Paper Summary")

@@ -44,6 +44,24 @@ class LocalStore:
     def get_manifest(self, paper_id: str) -> ClaimManifest:
         return self._by_id[paper_id]
 
+    def paper_catalog_rows(self) -> list[list[Any]]:
+        rows: list[list[Any]] = []
+        for paper_id in self.paper_ids():
+            summary = self.paper_summary(paper_id)
+            rows.append(
+                [
+                    summary["paper_id"],
+                    summary["title"],
+                    summary["overall_status"],
+                    summary["num_claims"],
+                    summary["num_cached_runs"],
+                    summary["num_reproduced"],
+                    summary["num_needs_review"],
+                    summary["repo_url"],
+                ]
+            )
+        return rows
+
     def paper_summary(self, paper_id: str) -> dict[str, Any]:
         manifest = self.get_manifest(paper_id)
         report = generate_reproducibility_report(manifest, load_cached_run_results(manifest))

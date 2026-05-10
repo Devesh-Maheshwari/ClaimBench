@@ -26,6 +26,23 @@ def test_local_store_summary_and_claim_rows() -> None:
     assert rows[0][0] == "rocket_claim_full_ucr_runtime"
 
 
+def test_local_store_paper_catalog_rows_summarize_all_papers() -> None:
+    store = LocalStore()
+
+    rows = store.paper_catalog_rows()
+
+    assert [row[0] for row in rows] == [
+        "minirocket_2012_08791",
+        "quant_2308_00928",
+        "rocket_1910_13051",
+    ]
+    assert rows[0][2] == "needs_review"
+    assert rows[0][3] == 2
+    assert rows[0][4] == 2
+    assert rows[1][4] == 1
+    assert "github.com" in rows[2][7]
+
+
 def test_local_store_experiment_rows_include_cached_run_results() -> None:
     store = LocalStore()
 
