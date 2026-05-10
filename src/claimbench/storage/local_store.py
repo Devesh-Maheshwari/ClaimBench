@@ -86,6 +86,31 @@ class LocalStore:
             )
         return rows
 
+    def experiment_rows(self, paper_id: str) -> list[list[Any]]:
+        manifest = self.get_manifest(paper_id)
+        report = generate_reproducibility_report(manifest, load_cached_run_results(manifest))
+        experiments_by_id = {
+            experiment["experiment_id"]: experiment
+            for experiment in manifest.data.get("experiments", [])
+        }
+        rows: list[list[Any]] = []
+        for experiment in report.experiments:
+            manifest_experiment = experiments_by_id[experiment.experiment_id]
+            rows.append(
+                [
+                    experiment.experiment_id,
+                    manifest_experiment["name"],
+                    experiment.status,
+                    experiment.observed_metric if experiment.observed_metric is not None else "not run",
+                    experiment.runtime_seconds
+                    if experiment.runtime_seconds is not None
+                    else "not run",
+                    ", ".join(manifest_experiment.get("linked_claim_ids", [])) or "unlinked",
+                    " ".join(experiment.command),
+                ]
+            )
+        return rows
+
     def claim_evidence(self, paper_id: str, claim_id: str | None = None) -> ClaimEvidence:
         manifest = self.get_manifest(paper_id)
         claim = _select_claim(manifest, claim_id)

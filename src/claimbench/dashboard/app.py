@@ -126,11 +126,20 @@ def build_app():
         summary = store.paper_summary(paper_id)
         overview = overview_markdown(summary)
         rows = store.claim_rows(paper_id)
+        experiment_rows = store.experiment_rows(paper_id)
         claim_ids = [row[0] for row in rows]
         selected_claim = claim_ids[0] if claim_ids else None
         evidence = evidence_markdown(store.claim_evidence(paper_id, selected_claim))
         report = store.report_preview(paper_id)
-        return overview, summary, rows, gr.update(choices=claim_ids, value=selected_claim), evidence, report
+        return (
+            overview,
+            summary,
+            rows,
+            experiment_rows,
+            gr.update(choices=claim_ids, value=selected_claim),
+            evidence,
+            report,
+        )
 
     def select_claim(paper_id: str, claim_id: str):
         return evidence_markdown(store.claim_evidence(paper_id, claim_id))
@@ -161,6 +170,20 @@ def build_app():
                 label="Claims",
                 interactive=False,
             )
+        with gr.Tab("Experiments"):
+            experiments = gr.Dataframe(
+                headers=[
+                    "Experiment ID",
+                    "Name",
+                    "Status",
+                    "Observed Metric",
+                    "Runtime Seconds",
+                    "Linked Claims",
+                    "Command",
+                ],
+                label="Experiments",
+                interactive=False,
+            )
         with gr.Tab("Evidence"):
             claim_selector = gr.Dropdown(label="Claim", choices=[], value=None)
             evidence = gr.Markdown(label="Evidence")
@@ -170,14 +193,14 @@ def build_app():
         selector.change(
             select_paper,
             inputs=selector,
-            outputs=[overview, summary, claims, claim_selector, evidence, report],
+            outputs=[overview, summary, claims, experiments, claim_selector, evidence, report],
         )
         claim_selector.change(select_claim, inputs=[selector, claim_selector], outputs=evidence)
         if choices:
             demo.load(
                 select_paper,
                 inputs=selector,
-                outputs=[overview, summary, claims, claim_selector, evidence, report],
+                outputs=[overview, summary, claims, experiments, claim_selector, evidence, report],
             )
 
     return demo

@@ -26,6 +26,18 @@ def test_local_store_summary_and_claim_rows() -> None:
     assert rows[0][0] == "rocket_claim_full_ucr_runtime"
 
 
+def test_local_store_experiment_rows_include_cached_run_results() -> None:
+    store = LocalStore()
+
+    rows = store.experiment_rows("minirocket_2012_08791")
+
+    assert rows[0][0] == "minirocket_exp_ucr_reduced"
+    assert rows[0][2] == "succeeded"
+    assert rows[0][3] == 12.8
+    assert rows[0][5] == "minirocket_claim_full_ucr_runtime"
+    assert "scripts/run_minirocket_single_dataset.py" in rows[0][6]
+
+
 def test_local_store_evidence_and_report_preview() -> None:
     store = LocalStore()
 
