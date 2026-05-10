@@ -65,6 +65,9 @@ def generate_reproducibility_report(
     experiment_status_counts = _status_counts(
         [experiment.status for experiment in experiment_reports]
     )
+    failure_category_counts = _status_counts(
+        [experiment.failure_category for experiment in experiment_reports]
+    )
 
     return ReproducibilityReport(
         paper=dict(manifest.data["paper"]),
@@ -76,6 +79,7 @@ def generate_reproducibility_report(
             "num_runs": len(results),
             "status_counts": status_counts,
             "experiment_status_counts": experiment_status_counts,
+            "failure_category_counts": failure_category_counts,
             "overall_status": _overall_status([claim.status for claim in claim_reports]),
         },
         claims=claim_reports,
@@ -106,6 +110,7 @@ def report_to_markdown(report: ReproducibilityReport) -> str:
         f"- Experiment runs: `{summary['num_runs']}`",
         f"- Claim status counts: `{_format_status_counts(summary['status_counts'])}`",
         f"- Experiment status counts: `{_format_status_counts(summary['experiment_status_counts'])}`",
+        f"- Failure category counts: `{_format_status_counts(summary['failure_category_counts'])}`",
         "",
         "## Claims",
     ]

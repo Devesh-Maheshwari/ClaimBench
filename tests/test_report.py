@@ -63,12 +63,14 @@ def test_generate_reproducibility_report_without_runs(tmp_path: Path) -> None:
     assert report.summary["overall_status"] == "needs_review"
     assert report.summary["num_runs"] == 0
     assert report.summary["experiment_status_counts"] == {"not_run": 1}
+    assert report.summary["failure_category_counts"] == {"not_run": 1}
     assert report.claims[0].status == "executable"
     assert report.claims[0].observed_metric is None
     assert report.experiments[0].status == "not_run"
     assert report.experiments[0].failure_category == "not_run"
     assert "Claim status counts: `executable=1`" in markdown
     assert "Experiment status counts: `not_run=1`" in markdown
+    assert "Failure category counts: `not_run=1`" in markdown
     assert "Failure category: `not_run`" in markdown
 
 
@@ -99,6 +101,7 @@ def test_generate_reproducibility_report_with_reproduced_result(tmp_path: Path) 
 
     assert report.summary["overall_status"] == "reproduced"
     assert report.summary["experiment_status_counts"] == {"succeeded": 1}
+    assert report.summary["failure_category_counts"] == {"none": 1}
     assert report.claims[0].status == "reproduced"
     assert report.claims[0].observed_metric == 0.91
     assert report.experiments[0].failure_category == "none"
@@ -107,6 +110,7 @@ def test_generate_reproducibility_report_with_reproduced_result(tmp_path: Path) 
     assert "ClaimBench Report: Fixture Paper" in markdown
     assert "Claim status counts: `reproduced=1`" in markdown
     assert "Experiment status counts: `succeeded=1`" in markdown
+    assert "Failure category counts: `none=1`" in markdown
     assert "Failure category: `none`" in markdown
     assert "Observed metric is within tolerance." in markdown
 
@@ -129,6 +133,7 @@ def test_generate_reproducibility_report_with_failed_run(tmp_path: Path) -> None
     markdown = report_to_markdown(report)
 
     assert report.summary["overall_status"] == "partial"
+    assert report.summary["failure_category_counts"] == {"command_failed": 1}
     assert report.claims[0].status == "failed"
     assert report.claims[0].reason == "Command exited with code 1."
     assert report.experiments[0].failure_category == "command_failed"
