@@ -24,6 +24,7 @@ def test_list_papers_tool_returns_cached_run_summaries() -> None:
         "rocket_1910_13051",
     ]
     assert payload["papers"][0]["num_cached_runs"] > 0
+    assert payload["papers"][0]["failure_category_counts"] == {"none": 2}
 
 
 def test_validate_manifest_tool_reports_schema_issues(tmp_path: Path) -> None:
@@ -55,7 +56,9 @@ def test_cached_report_tool_returns_json_report() -> None:
     assert payload["format"] == "json"
     assert payload["paper_id"] == "quant_2308_00928"
     assert payload["report"]["summary"]["num_runs"] == 1
+    assert payload["report"]["summary"]["failure_category_counts"] == {"none": 1}
     assert payload["report"]["experiments"][0]["status"] == "succeeded"
+    assert payload["report"]["experiments"][0]["failure_category"] == "none"
 
 
 def test_cached_report_tool_returns_markdown_for_manifest_path() -> None:
@@ -67,6 +70,7 @@ def test_cached_report_tool_returns_markdown_for_manifest_path() -> None:
     assert payload["format"] == "markdown"
     assert "ClaimBench Report: ROCKET" in payload["report"]
     assert "Experiment runs: `2`" in payload["report"]
+    assert "Failure category counts: `none=2`" in payload["report"]
 
 
 def test_cached_report_tool_requires_one_report_target() -> None:
