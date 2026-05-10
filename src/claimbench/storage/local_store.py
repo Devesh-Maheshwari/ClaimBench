@@ -181,6 +181,10 @@ class LocalStore:
             "validate": f"{cli} validate-manifest {manifest_path}",
             "markdown_report": f"{cli} report {manifest_path} --format markdown",
             "json_report": f"{cli} report {manifest_path} --format json",
+            "export_reports": (
+                f"{cli} export-reports --root {_display_path(self.manifest_root)} "
+                "--output-dir examples/reports --format markdown"
+            ),
             "cached_evidence": (
                 f"{cli} agent-tool claim-evidence "
                 f"--manifest-path {manifest_path} --paper-id {paper_id}"

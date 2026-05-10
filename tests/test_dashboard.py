@@ -145,6 +145,10 @@ def test_local_commands_markdown_renders_copyable_commands() -> None:
         "PYTHONPATH=src python -m claimbench.cli report "
         "examples/manifests/quant_2308_00928.manifest.json --format json"
     ) in rendered
+    assert (
+        "PYTHONPATH=src python -m claimbench.cli export-reports "
+        "--root examples/manifests --output-dir examples/reports --format markdown"
+    ) in rendered
 
 
 def test_claim_choices_returns_manifest_claim_ids() -> None:

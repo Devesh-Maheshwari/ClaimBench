@@ -147,6 +147,8 @@ def local_commands_markdown(commands: dict[str, str]) -> str:
             f"```bash\n{commands['markdown_report']}\n```",
             "Generate machine-readable JSON:",
             f"```bash\n{commands['json_report']}\n```",
+            "Export reports for all manifests in this dashboard root:",
+            f"```bash\n{commands['export_reports']}\n```",
             "Inspect cached claim evidence through the agent-tool interface:",
             f"```bash\n{commands['cached_evidence']}\n```",
         ]

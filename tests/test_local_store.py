@@ -107,6 +107,10 @@ def test_local_store_local_commands_point_to_manifest() -> None:
     )
     assert commands["markdown_report"].endswith("--format markdown")
     assert commands["json_report"].endswith("--format json")
+    assert commands["export_reports"] == (
+        "PYTHONPATH=src python -m claimbench.cli export-reports "
+        "--root examples/manifests --output-dir examples/reports --format markdown"
+    )
     assert "agent-tool claim-evidence" in commands["cached_evidence"]
     assert "--paper-id quant_2308_00928" in commands["cached_evidence"]
 
