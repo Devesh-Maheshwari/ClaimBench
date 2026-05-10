@@ -272,6 +272,7 @@ def build_app(manifest_root: Path = Path("examples/manifests")):
                     "Experiment ID",
                     "Name",
                     "Status",
+                    "Failure Category",
                     "Observed Metric",
                     "Runtime Seconds",
                     "Linked Claims",

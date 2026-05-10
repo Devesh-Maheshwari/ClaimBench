@@ -120,6 +120,7 @@ class LocalStore:
                     experiment.experiment_id,
                     manifest_experiment["name"],
                     experiment.status,
+                    experiment.failure_category,
                     experiment.observed_metric if experiment.observed_metric is not None else "not run",
                     experiment.runtime_seconds
                     if experiment.runtime_seconds is not None

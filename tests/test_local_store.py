@@ -50,9 +50,10 @@ def test_local_store_experiment_rows_include_cached_run_results() -> None:
 
     assert rows[0][0] == "minirocket_exp_ucr_reduced"
     assert rows[0][2] == "succeeded"
-    assert rows[0][3] == 12.8
-    assert rows[0][5] == "minirocket_claim_full_ucr_runtime"
-    assert "scripts/run_minirocket_single_dataset.py" in rows[0][6]
+    assert rows[0][3] == "none"
+    assert rows[0][4] == 12.8
+    assert rows[0][6] == "minirocket_claim_full_ucr_runtime"
+    assert "scripts/run_minirocket_single_dataset.py" in rows[0][7]
 
 
 def test_local_store_cached_run_rows_include_artifact_metadata() -> None:
