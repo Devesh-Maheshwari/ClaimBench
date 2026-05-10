@@ -139,6 +139,21 @@ class LocalStore:
             )
         return rows
 
+    def review_status(self, paper_id: str) -> dict[str, Any]:
+        manifest = self.get_manifest(paper_id)
+        provenance = manifest.data.get("provenance", {})
+        validation = manifest.data.get("validation", {})
+        return {
+            "review_status": provenance.get("review_status", "unknown"),
+            "created_by": provenance.get("created_by", "unknown"),
+            "created_at": provenance.get("created_at", "unknown"),
+            "extraction_model": provenance.get("extraction_model") or "manual",
+            "parser_version": provenance.get("parser_version") or "not specified",
+            "manual_edits": provenance.get("manual_edits", []),
+            "unresolved_fields": validation.get("unresolved_fields", []),
+            "validation_notes": validation.get("notes", ""),
+        }
+
     def claim_evidence(self, paper_id: str, claim_id: str | None = None) -> ClaimEvidence:
         manifest = self.get_manifest(paper_id)
         claim = _select_claim(manifest, claim_id)

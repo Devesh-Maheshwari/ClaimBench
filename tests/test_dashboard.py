@@ -6,6 +6,7 @@ from claimbench.dashboard.app import (
     environment_markdown,
     load_dashboard_manifests,
     overview_markdown,
+    review_status_markdown,
 )
 from claimbench.storage.local_store import LocalStore
 
@@ -51,6 +52,19 @@ def test_environment_markdown_contains_resource_summary() -> None:
     assert "Execution mode: `docker`" in rendered
     assert "Base image: `python:3.10-slim`" in rendered
     assert "Dependency files: `requirements.txt`" in rendered
+
+
+def test_review_status_markdown_contains_validation_context() -> None:
+    store = LocalStore()
+    review = store.review_status("rocket_1910_13051")
+
+    rendered = review_status_markdown(review)
+
+    assert "## Review Status" in rendered
+    assert "Status: `draft`" in rendered
+    assert "### Unresolved Fields" in rendered
+    assert "Docker image digest" in rendered
+    assert "Week 2 schema/dashboard work" in rendered
 
 
 def test_claim_choices_returns_manifest_claim_ids() -> None:

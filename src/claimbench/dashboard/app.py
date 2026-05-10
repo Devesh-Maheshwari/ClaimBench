@@ -103,6 +103,38 @@ def environment_markdown(environment: dict[str, Any]) -> str:
     )
 
 
+def review_status_markdown(review: dict[str, Any]) -> str:
+    """Render manifest review and validation status."""
+
+    manual_edits = "\n".join(f"- {edit}" for edit in review["manual_edits"]) or "- none listed"
+    unresolved_fields = (
+        "\n".join(f"- {field}" for field in review["unresolved_fields"]) or "- none listed"
+    )
+    return "\n".join(
+        [
+            "## Review Status",
+            "",
+            f"- Status: `{review['review_status']}`",
+            f"- Created by: `{review['created_by']}`",
+            f"- Created at: `{review['created_at']}`",
+            f"- Extraction model: `{review['extraction_model']}`",
+            f"- Parser version: `{review['parser_version']}`",
+            "",
+            "### Manual Edits",
+            "",
+            manual_edits,
+            "",
+            "### Unresolved Fields",
+            "",
+            unresolved_fields,
+            "",
+            "### Validation Notes",
+            "",
+            review["validation_notes"] or "No validation notes listed.",
+        ]
+    )
+
+
 def evidence_markdown(evidence: ClaimEvidence) -> str:
     """Render claim evidence as markdown."""
 
@@ -147,6 +179,7 @@ def build_app():
         experiment_rows = store.experiment_rows(paper_id)
         environment = environment_markdown(store.environment_summary(paper_id))
         datasets = store.dataset_rows(paper_id)
+        review = review_status_markdown(store.review_status(paper_id))
         claim_ids = [row[0] for row in rows]
         selected_claim = claim_ids[0] if claim_ids else None
         evidence = evidence_markdown(store.claim_evidence(paper_id, selected_claim))
@@ -158,6 +191,7 @@ def build_app():
             experiment_rows,
             environment,
             datasets,
+            review,
             gr.update(choices=claim_ids, value=selected_claim),
             evidence,
             report,
@@ -220,6 +254,8 @@ def build_app():
                 label="Datasets",
                 interactive=False,
             )
+        with gr.Tab("Review Status"):
+            review = gr.Markdown(label="Review Status")
         with gr.Tab("Evidence"):
             claim_selector = gr.Dropdown(label="Claim", choices=[], value=None)
             evidence = gr.Markdown(label="Evidence")
@@ -236,6 +272,7 @@ def build_app():
                 experiments,
                 environment,
                 datasets,
+                review,
                 claim_selector,
                 evidence,
                 report,
@@ -253,6 +290,7 @@ def build_app():
                     experiments,
                     environment,
                     datasets,
+                    review,
                     claim_selector,
                     evidence,
                     report,

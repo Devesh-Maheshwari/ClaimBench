@@ -52,6 +52,18 @@ def test_local_store_resource_rows_include_environment_and_datasets() -> None:
     assert "selected small datasets" in datasets[0][5]
 
 
+def test_local_store_review_status_includes_unresolved_fields() -> None:
+    store = LocalStore()
+
+    review = store.review_status("minirocket_2012_08791")
+
+    assert review["review_status"] == "draft"
+    assert review["created_by"] == "ClaimBench Week 2 manual review"
+    assert review["extraction_model"] == "manual"
+    assert "expected repeatability threshold" in review["unresolved_fields"]
+    assert "Initial manifest drafted" in review["manual_edits"][0]
+
+
 def test_local_store_evidence_and_report_preview() -> None:
     store = LocalStore()
 
