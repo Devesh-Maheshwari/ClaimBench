@@ -43,6 +43,9 @@ def test_create_mcp_server_registers_read_only_tools(monkeypatch: pytest.MonkeyP
         "quant_claim_minimal_features",
     )
     assert evidence["evidence"]["observed_metric"] == "1.0"
+    report = server.tools["cached_report"](paper_id="quant_2308_00928")
+    assert report["report"]["summary"]["failure_category_counts"] == {"none": 1}
+    assert report["report"]["experiments"][0]["failure_category"] == "none"
 
 
 def test_run_mcp_server_delegates_to_fastmcp(monkeypatch: pytest.MonkeyPatch) -> None:
