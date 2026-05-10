@@ -32,6 +32,7 @@ from claimbench.storage.cached_runs import (
     import_cached_run_record,
     load_cached_run_results,
 )
+from claimbench.storage.local_store import LocalStore
 from claimbench.tools.local import (
     cached_report_tool,
     claim_evidence_tool,
@@ -41,7 +42,7 @@ from claimbench.tools.local import (
 
 
 app = typer.Typer(help="ClaimBench reproducibility auditor CLI.")
-console = Console()
+console = Console(width=160)
 
 
 @app.command("validate-manifest")
@@ -81,23 +82,35 @@ def list_papers(
         return
 
     try:
-        manifests = load_all_manifests(root)
+        store = LocalStore(root)
     except ManifestError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
 
     table = Table(title="ClaimBench Papers")
-    table.add_column("Paper ID")
-    table.add_column("Title")
+    table.add_column("Paper ID", no_wrap=True)
+    table.add_column("Title", overflow="fold")
+    table.add_column("Overall Status", no_wrap=True)
     table.add_column("Claims", justify="right")
-    table.add_column("Manifest")
+    table.add_column("Cached Runs", justify="right")
+    table.add_column("Failure Categories", no_wrap=True)
+    table.add_column("Manifest", overflow="fold")
 
-    for manifest in manifests:
+    for row in store.paper_catalog_rows():
+        paper_id = row[0]
+        manifest = store.get_manifest(paper_id)
+        try:
+            manifest_display = str(manifest.path.relative_to(root))
+        except ValueError:
+            manifest_display = str(manifest.path)
         table.add_row(
-            manifest.paper_id,
-            manifest.title,
-            str(len(manifest.claims)),
-            str(manifest.path),
+            row[0],
+            row[1],
+            row[2],
+            str(row[3]),
+            str(row[4]),
+            row[7],
+            manifest_display,
         )
     console.print(table)
 

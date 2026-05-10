@@ -166,6 +166,23 @@ def test_run_experiment_cli_routes_to_docker_runner(
     assert '"status": "succeeded"' in result.output
 
 
+def test_list_papers_cli_shows_status_and_failure_summary(tmp_path: Path) -> None:
+    manifest_root = tmp_path / "manifests"
+    manifest_root.mkdir()
+    _write_manifest(manifest_root / "fixture.manifest.json")
+
+    result = runner.invoke(
+        app,
+        ["list-papers", "--root", str(manifest_root)],
+        terminal_width=200,
+    )
+
+    assert result.exit_code == 0
+    assert "fixture" in result.output
+    assert "reproduced" in result.output
+    assert "none=1" in result.output
+
+
 def test_run_experiment_cli_writes_cache_record(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
