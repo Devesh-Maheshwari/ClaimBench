@@ -62,10 +62,12 @@ def test_generate_reproducibility_report_without_runs(tmp_path: Path) -> None:
 
     assert report.summary["overall_status"] == "needs_review"
     assert report.summary["num_runs"] == 0
+    assert report.summary["experiment_status_counts"] == {"not_run": 1}
     assert report.claims[0].status == "executable"
     assert report.claims[0].observed_metric is None
     assert report.experiments[0].status == "not_run"
     assert "Claim status counts: `executable=1`" in markdown
+    assert "Experiment status counts: `not_run=1`" in markdown
 
 
 def test_generate_reproducibility_report_with_reproduced_result(tmp_path: Path) -> None:
@@ -94,11 +96,13 @@ def test_generate_reproducibility_report_with_reproduced_result(tmp_path: Path) 
     markdown = report_to_markdown(report)
 
     assert report.summary["overall_status"] == "reproduced"
+    assert report.summary["experiment_status_counts"] == {"succeeded": 1}
     assert report.claims[0].status == "reproduced"
     assert report.claims[0].observed_metric == 0.91
     assert data["experiments"][0]["runtime_seconds"] == 1.2
     assert "ClaimBench Report: Fixture Paper" in markdown
     assert "Claim status counts: `reproduced=1`" in markdown
+    assert "Experiment status counts: `succeeded=1`" in markdown
     assert "Observed metric is within tolerance." in markdown
 
 

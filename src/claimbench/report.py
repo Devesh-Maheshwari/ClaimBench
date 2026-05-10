@@ -61,6 +61,9 @@ def generate_reproducibility_report(
         for experiment in manifest.data.get("experiments", [])
     ]
     status_counts = _status_counts([claim.status for claim in claim_reports])
+    experiment_status_counts = _status_counts(
+        [experiment.status for experiment in experiment_reports]
+    )
 
     return ReproducibilityReport(
         paper=dict(manifest.data["paper"]),
@@ -71,6 +74,7 @@ def generate_reproducibility_report(
             "num_experiments": len(experiment_reports),
             "num_runs": len(results),
             "status_counts": status_counts,
+            "experiment_status_counts": experiment_status_counts,
             "overall_status": _overall_status([claim.status for claim in claim_reports]),
         },
         claims=claim_reports,
@@ -100,6 +104,7 @@ def report_to_markdown(report: ReproducibilityReport) -> str:
         f"- Claims: `{summary['num_claims']}`",
         f"- Experiment runs: `{summary['num_runs']}`",
         f"- Claim status counts: `{_format_status_counts(summary['status_counts'])}`",
+        f"- Experiment status counts: `{_format_status_counts(summary['experiment_status_counts'])}`",
         "",
         "## Claims",
     ]
