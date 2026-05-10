@@ -272,6 +272,10 @@ def mcp_server(
 
 @app.command("dashboard")
 def dashboard(
+    root: Annotated[
+        Path,
+        typer.Option("--root", help="Directory containing *.manifest.json files."),
+    ] = Path("examples/manifests"),
     share: Annotated[
         bool,
         typer.Option("--share", help="Create a public Gradio share link."),
@@ -282,7 +286,7 @@ def dashboard(
     try:
         from claimbench.dashboard.app import build_app
 
-        build_app().launch(share=share)
+        build_app(root).launch(share=share)
     except ImportError as exc:
         console.print(
             "Dashboard dependencies are not installed.\n"

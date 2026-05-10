@@ -443,19 +443,27 @@ def test_dashboard_cli_launches_dashboard(monkeypatch: pytest.MonkeyPatch) -> No
             calls.append(kwargs)
 
     fake_module = types.ModuleType("claimbench.dashboard.app")
-    fake_module.build_app = lambda: FakeDashboard()
+
+    def fake_build_app(root: Path) -> FakeDashboard:
+        calls.append({"root": root})
+        return FakeDashboard()
+
+    fake_module.build_app = fake_build_app
     monkeypatch.setitem(sys.modules, "claimbench.dashboard.app", fake_module)
 
-    result = runner.invoke(app, ["dashboard", "--share"])
+    result = runner.invoke(app, ["dashboard", "--root", "examples/manifests", "--share"])
 
     assert result.exit_code == 0
-    assert calls == [{"share": True}]
+    assert calls == [
+        {"root": Path("examples/manifests")},
+        {"share": True},
+    ]
 
 
 def test_dashboard_cli_reports_missing_optional_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_module = types.ModuleType("claimbench.dashboard.app")
 
-    def fake_build_app() -> object:
+    def fake_build_app(root: Path) -> object:
         raise ImportError("No module named 'gradio'")
 
     fake_module.build_app = fake_build_app

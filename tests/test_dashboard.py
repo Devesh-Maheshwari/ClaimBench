@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from claimbench.dashboard.app import (
+    build_app,
     claim_choices,
     evidence_markdown,
     environment_markdown,
@@ -16,6 +17,66 @@ def test_dashboard_loads_gold_set_manifests() -> None:
     manifests = load_dashboard_manifests()
 
     assert len(manifests) == 3
+
+
+def test_dashboard_build_app_accepts_manifest_root(monkeypatch) -> None:
+    roots = []
+
+    class FakeBlocks:
+        def __init__(self, **_kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def load(self, *_args, **_kwargs):
+            return None
+
+        def change(self, *_args, **_kwargs):
+            return None
+
+    class FakeGradio:
+        Blocks = FakeBlocks
+
+        @staticmethod
+        def Markdown(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def Dropdown(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def Tab(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def JSON(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def Dataframe(*_args, **_kwargs):
+            return FakeBlocks()
+
+    class FakeStore:
+        def __init__(self, root):
+            roots.append(root)
+
+        def paper_ids(self):
+            return []
+
+        def paper_catalog_rows(self):
+            return []
+
+    monkeypatch.setitem(__import__("sys").modules, "gradio", FakeGradio)
+    monkeypatch.setattr("claimbench.dashboard.app.LocalStore", FakeStore)
+
+    build_app("custom/manifests")
+
+    assert roots == ["custom/manifests"]
 
 
 def test_evidence_markdown_contains_claim_contract() -> None:

@@ -178,7 +178,7 @@ def evidence_markdown(evidence: ClaimEvidence) -> str:
     )
 
 
-def build_app():
+def build_app(manifest_root: Path = Path("examples/manifests")):
     """Build a Gradio Blocks app.
 
     Gradio is imported lazily so CLI and tests can use dashboard helpers without
@@ -187,7 +187,7 @@ def build_app():
 
     import gradio as gr
 
-    store = LocalStore()
+    store = LocalStore(manifest_root)
     choices = store.paper_ids()
 
     def select_paper(paper_id: str):
