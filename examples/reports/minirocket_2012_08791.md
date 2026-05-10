@@ -7,6 +7,9 @@
 - Overall status: `needs_review`
 - Claims: `2`
 - Experiment runs: `2`
+- Claim status counts: `needs_review=2`
+- Experiment status counts: `succeeded=2`
+- Failure category counts: `none=2`
 
 ## Claims
 
@@ -38,6 +41,7 @@ MINIROCKET is almost deterministic while maintaining essentially the same accura
 - Return code: `0`
 - Runtime seconds: `12.8`
 - Observed metric: `12.8`
+- Failure category: `none`
 - Command: `python scripts/run_minirocket_single_dataset.py --dataset Coffee --output ./runs/minirocket_single_dataset/metrics.json`
 
 ### `minirocket_exp_repeatability`
@@ -46,4 +50,5 @@ MINIROCKET is almost deterministic while maintaining essentially the same accura
 - Return code: `0`
 - Runtime seconds: `39.6`
 - Observed metric: `0.0`
+- Failure category: `none`
 - Command: `python scripts/run_minirocket_repeatability.py --dataset Coffee --runs 3 --output ./runs/minirocket_repeatability/metrics.json`
