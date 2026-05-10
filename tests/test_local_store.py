@@ -38,6 +38,21 @@ def test_local_store_experiment_rows_include_cached_run_results() -> None:
     assert "scripts/run_minirocket_single_dataset.py" in rows[0][6]
 
 
+def test_local_store_cached_run_rows_include_artifact_metadata() -> None:
+    store = LocalStore()
+
+    rows = store.cached_run_rows("rocket_1910_13051")
+
+    assert rows[0][0] == "rocket_cached_ucr_reduced_2026_05_09"
+    assert rows[0][1] == "rocket_exp_ucr_reduced"
+    assert rows[0][2] == "succeeded"
+    assert '"runtime_seconds": 438.2' in rows[0][3]
+    assert rows[0][4] == "cached://rocket/ucr_reduced/log.txt"
+    assert rows[0][5] == "cached://rocket/ucr_reduced/metrics.csv"
+    assert rows[0][6] == "2026-05-09T00:00:00Z"
+    assert rows[0][7] == "2026-05-09T00:07:18Z"
+
+
 def test_local_store_resource_rows_include_environment_and_datasets() -> None:
     store = LocalStore()
 

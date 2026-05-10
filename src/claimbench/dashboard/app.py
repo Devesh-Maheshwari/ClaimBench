@@ -195,6 +195,7 @@ def build_app():
         overview = overview_markdown(summary)
         rows = store.claim_rows(paper_id)
         experiment_rows = store.experiment_rows(paper_id)
+        cached_runs = store.cached_run_rows(paper_id)
         environment = environment_markdown(store.environment_summary(paper_id))
         datasets = store.dataset_rows(paper_id)
         review = review_status_markdown(store.review_status(paper_id))
@@ -208,6 +209,7 @@ def build_app():
             summary,
             rows,
             experiment_rows,
+            cached_runs,
             environment,
             datasets,
             review,
@@ -260,6 +262,21 @@ def build_app():
                 label="Experiments",
                 interactive=False,
             )
+        with gr.Tab("Cached Runs"):
+            cached_runs = gr.Dataframe(
+                headers=[
+                    "Run ID",
+                    "Experiment ID",
+                    "Status",
+                    "Metrics",
+                    "Log URI",
+                    "Artifact URIs",
+                    "Started At",
+                    "Finished At",
+                ],
+                label="Cached Runs",
+                interactive=False,
+            )
         with gr.Tab("Resources"):
             environment = gr.Markdown(label="Environment")
             datasets = gr.Dataframe(
@@ -292,6 +309,7 @@ def build_app():
                 summary,
                 claims,
                 experiments,
+                cached_runs,
                 environment,
                 datasets,
                 review,
@@ -311,6 +329,7 @@ def build_app():
                     summary,
                     claims,
                     experiments,
+                    cached_runs,
                     environment,
                     datasets,
                     review,

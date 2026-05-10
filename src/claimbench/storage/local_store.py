@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -166,6 +167,24 @@ class LocalStore:
                 f"--manifest-path {manifest_path} --paper-id {paper_id}"
             ),
         }
+
+    def cached_run_rows(self, paper_id: str) -> list[list[Any]]:
+        manifest = self.get_manifest(paper_id)
+        rows: list[list[Any]] = []
+        for cached_run in manifest.data.get("cached_runs", []):
+            rows.append(
+                [
+                    cached_run["run_id"],
+                    cached_run["experiment_id"],
+                    cached_run["status"],
+                    json.dumps(cached_run.get("metrics", {}), sort_keys=True),
+                    cached_run.get("log_uri") or "not listed",
+                    ", ".join(cached_run.get("artifact_uris", [])) or "not listed",
+                    cached_run.get("started_at") or "not listed",
+                    cached_run.get("finished_at") or "not listed",
+                ]
+            )
+        return rows
 
     def claim_evidence(self, paper_id: str, claim_id: str | None = None) -> ClaimEvidence:
         manifest = self.get_manifest(paper_id)
