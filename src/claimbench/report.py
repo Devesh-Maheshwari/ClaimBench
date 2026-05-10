@@ -32,6 +32,7 @@ class ExperimentReport:
     returncode: int | None
     runtime_seconds: float | None
     observed_metric: Any | None
+    failure_category: str
     error: str | None
 
 
@@ -136,6 +137,7 @@ def report_to_markdown(report: ReproducibilityReport) -> str:
                 f"- Return code: `{experiment.returncode if experiment.returncode is not None else 'n/a'}`",
                 f"- Runtime seconds: `{experiment.runtime_seconds if experiment.runtime_seconds is not None else 'not run'}`",
                 f"- Observed metric: `{experiment.observed_metric if experiment.observed_metric is not None else 'not run'}`",
+                f"- Failure category: `{experiment.failure_category}`",
                 f"- Command: `{' '.join(experiment.command)}`",
             ]
         )
@@ -213,6 +215,7 @@ def _experiment_report(
             returncode=None,
             runtime_seconds=None,
             observed_metric=None,
+            failure_category="not_run",
             error=None,
         )
 
@@ -223,12 +226,31 @@ def _experiment_report(
         returncode=result.returncode,
         runtime_seconds=result.runtime_seconds,
         observed_metric=result.observed_metric,
+        failure_category=_failure_category(result),
         error=result.error,
     )
 
 
 def _status_counts(statuses: list[str]) -> dict[str, int]:
     return {status: statuses.count(status) for status in sorted(set(statuses))}
+
+
+def _failure_category(result: ExperimentRunResult) -> str:
+    if result.status in {"succeeded", "needs_review"}:
+        return "none"
+    if result.status == "timed_out":
+        return "timeout"
+    if result.returncode not in {None, 0}:
+        return "command_failed"
+    if result.error:
+        lowered = result.error.lower()
+        if "metric" in lowered or "parse" in lowered:
+            return "metric_parse_failed"
+        if "no such file" in lowered or "not found" in lowered:
+            return "missing_file"
+    if result.status == "failed":
+        return "runner_failed"
+    return result.status
 
 
 def _overall_status(statuses: list[str]) -> str:
