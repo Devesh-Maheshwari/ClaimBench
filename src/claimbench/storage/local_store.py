@@ -177,7 +177,7 @@ class LocalStore:
         manifest = self.get_manifest(paper_id)
         manifest_path = _display_path(manifest.path)
         return {
-            "validate": f"claimbench validate {manifest_path}",
+            "validate": f"claimbench validate-manifest {manifest_path}",
             "markdown_report": f"claimbench report {manifest_path} --format markdown",
             "json_report": f"claimbench report {manifest_path} --format json",
             "cached_evidence": (

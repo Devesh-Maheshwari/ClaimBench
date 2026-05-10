@@ -137,7 +137,7 @@ def test_local_commands_markdown_renders_copyable_commands() -> None:
 
     assert "## Local Commands" in rendered
     assert "```bash" in rendered
-    assert "claimbench validate examples/manifests/quant_2308_00928.manifest.json" in rendered
+    assert "claimbench validate-manifest examples/manifests/quant_2308_00928.manifest.json" in rendered
     assert "claimbench report examples/manifests/quant_2308_00928.manifest.json --format json" in rendered
 
 
