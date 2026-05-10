@@ -423,6 +423,65 @@ def test_report_cli_writes_json_output_file(tmp_path: Path) -> None:
     assert payload["summary"]["num_runs"] == 1
 
 
+def test_export_reports_cli_writes_all_manifest_reports(tmp_path: Path) -> None:
+    manifest_root = tmp_path / "manifests"
+    output_dir = tmp_path / "reports"
+    manifest_root.mkdir()
+    _write_manifest(manifest_root / "fixture.manifest.json")
+
+    result = runner.invoke(
+        app,
+        [
+            "export-reports",
+            "--root",
+            str(manifest_root),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Reports written" in result.output
+    rendered = (output_dir / "fixture.md").read_text(encoding="utf-8")
+    assert "ClaimBench Report: Fixture Paper" in rendered
+    assert "Observed: `0.91`" in rendered
+
+
+def test_export_reports_cli_writes_json_reports_without_cached_runs(tmp_path: Path) -> None:
+    manifest_root = tmp_path / "manifests"
+    output_dir = tmp_path / "reports"
+    manifest_root.mkdir()
+    _write_manifest(manifest_root / "fixture.manifest.json")
+
+    result = runner.invoke(
+        app,
+        [
+            "export-reports",
+            "--root",
+            str(manifest_root),
+            "--output-dir",
+            str(output_dir),
+            "--format",
+            "json",
+            "--no-cached-runs",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads((output_dir / "fixture.json").read_text(encoding="utf-8"))
+    assert payload["summary"]["num_runs"] == 0
+
+
+def test_export_reports_cli_handles_empty_manifest_root(tmp_path: Path) -> None:
+    manifest_root = tmp_path / "empty"
+    manifest_root.mkdir()
+
+    result = runner.invoke(app, ["export-reports", "--root", str(manifest_root)])
+
+    assert result.exit_code == 0
+    assert "No manifests found" in result.output
+
+
 def test_report_cli_rejects_unknown_format(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     _write_manifest(manifest_path)

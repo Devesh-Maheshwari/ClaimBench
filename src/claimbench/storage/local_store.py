@@ -176,12 +176,13 @@ class LocalStore:
     def local_commands(self, paper_id: str) -> dict[str, str]:
         manifest = self.get_manifest(paper_id)
         manifest_path = _display_path(manifest.path)
+        cli = "PYTHONPATH=src python -m claimbench.cli"
         return {
-            "validate": f"claimbench validate-manifest {manifest_path}",
-            "markdown_report": f"claimbench report {manifest_path} --format markdown",
-            "json_report": f"claimbench report {manifest_path} --format json",
+            "validate": f"{cli} validate-manifest {manifest_path}",
+            "markdown_report": f"{cli} report {manifest_path} --format markdown",
+            "json_report": f"{cli} report {manifest_path} --format json",
             "cached_evidence": (
-                "claimbench agent-tool claim-evidence "
+                f"{cli} agent-tool claim-evidence "
                 f"--manifest-path {manifest_path} --paper-id {paper_id}"
             ),
         }

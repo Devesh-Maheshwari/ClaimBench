@@ -137,8 +137,14 @@ def test_local_commands_markdown_renders_copyable_commands() -> None:
 
     assert "## Local Commands" in rendered
     assert "```bash" in rendered
-    assert "claimbench validate-manifest examples/manifests/quant_2308_00928.manifest.json" in rendered
-    assert "claimbench report examples/manifests/quant_2308_00928.manifest.json --format json" in rendered
+    assert (
+        "PYTHONPATH=src python -m claimbench.cli validate-manifest "
+        "examples/manifests/quant_2308_00928.manifest.json"
+    ) in rendered
+    assert (
+        "PYTHONPATH=src python -m claimbench.cli report "
+        "examples/manifests/quant_2308_00928.manifest.json --format json"
+    ) in rendered
 
 
 def test_claim_choices_returns_manifest_claim_ids() -> None:

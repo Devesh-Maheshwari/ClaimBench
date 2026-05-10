@@ -213,6 +213,61 @@ def report(
         console.print(rendered)
 
 
+@app.command("export-reports")
+def export_reports(
+    root: Annotated[
+        Path,
+        typer.Option("--root", help="Directory containing *.manifest.json files."),
+    ] = Path("examples/manifests"),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", "-o", help="Directory to write generated reports."),
+    ] = Path("examples/reports"),
+    output_format: Annotated[
+        str,
+        typer.Option("--format", help="Report output format: markdown or json."),
+    ] = "markdown",
+    use_cached_runs: Annotated[
+        bool,
+        typer.Option("--cached-runs/--no-cached-runs", help="Include manifest cached_runs in reports."),
+    ] = True,
+) -> None:
+    """Render reproducibility reports for every manifest in a directory."""
+
+    extension_by_format = {"markdown": "md", "json": "json"}
+    if output_format not in extension_by_format:
+        console.print(f"[red]Unsupported report format: {output_format}. Expected 'markdown' or 'json'.[/red]")
+        raise typer.Exit(1)
+
+    try:
+        manifests = load_all_manifests(root)
+    except ManifestError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    if not manifests:
+        console.print(f"[yellow]No manifests found in {root}[/yellow]")
+        return
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    written: list[Path] = []
+    for manifest in manifests:
+        run_results = load_cached_run_results(manifest) if use_cached_runs else []
+        generated = generate_reproducibility_report(manifest, run_results)
+        if output_format == "markdown":
+            rendered = report_to_markdown(generated)
+        else:
+            rendered = json.dumps(report_to_dict(generated), indent=2, default=str)
+
+        output_path = output_dir / f"{manifest.paper_id}.{extension_by_format[output_format]}"
+        output_path.write_text(rendered + "\n", encoding="utf-8")
+        written.append(output_path)
+
+    console.print(f"[green]Reports written:[/green] {len(written)}")
+    for path in written:
+        console.print(f"- {path}")
+
+
 @app.command("agent-tool")
 def agent_tool(
     tool_name: Annotated[

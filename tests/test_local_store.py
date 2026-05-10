@@ -102,7 +102,8 @@ def test_local_store_local_commands_point_to_manifest() -> None:
     commands = store.local_commands("quant_2308_00928")
 
     assert commands["validate"] == (
-        "claimbench validate-manifest examples/manifests/quant_2308_00928.manifest.json"
+        "PYTHONPATH=src python -m claimbench.cli validate-manifest "
+        "examples/manifests/quant_2308_00928.manifest.json"
     )
     assert commands["markdown_report"].endswith("--format markdown")
     assert commands["json_report"].endswith("--format json")
