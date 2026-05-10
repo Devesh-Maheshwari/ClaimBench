@@ -61,6 +61,30 @@ def claim_choices(manifest: ClaimManifest) -> list[str]:
     return [claim["claim_id"] for claim in manifest.claims]
 
 
+def overview_markdown(summary: dict[str, Any]) -> str:
+    """Render a readable paper overview."""
+
+    paper_url = summary.get("paper_url") or f"https://arxiv.org/abs/{summary['arxiv_id']}"
+    return "\n".join(
+        [
+            f"## {summary['title']}",
+            "",
+            f"- Paper ID: `{summary['paper_id']}`",
+            f"- Overall status: `{summary['overall_status']}`",
+            f"- Claims: `{summary['num_claims']}`",
+            f"- Cached demo runs: `{summary['num_cached_runs']}`",
+            f"- Needs review: `{summary['num_needs_review']}`",
+            f"- Reproduced: `{summary['num_reproduced']}`",
+            f"- arXiv: [{summary['arxiv_id']}]({paper_url})",
+            f"- Repository: [{summary['repo_url']}]({summary['repo_url']})",
+            f"- Commit: `{summary['repo_commit']}`",
+            "",
+            "This public demo shows curated cached runs for safety. "
+            "Local/self-hosted runs can execute manifests in a sandbox and import generated cache records.",
+        ]
+    )
+
+
 def evidence_markdown(evidence: ClaimEvidence) -> str:
     """Render claim evidence as markdown."""
 
@@ -100,12 +124,13 @@ def build_app():
 
     def select_paper(paper_id: str):
         summary = store.paper_summary(paper_id)
+        overview = overview_markdown(summary)
         rows = store.claim_rows(paper_id)
         claim_ids = [row[0] for row in rows]
         selected_claim = claim_ids[0] if claim_ids else None
         evidence = evidence_markdown(store.claim_evidence(paper_id, selected_claim))
         report = store.report_preview(paper_id)
-        return summary, rows, gr.update(choices=claim_ids, value=selected_claim), evidence, report
+        return overview, summary, rows, gr.update(choices=claim_ids, value=selected_claim), evidence, report
 
     def select_claim(paper_id: str, claim_id: str):
         return evidence_markdown(store.claim_evidence(paper_id, claim_id))
@@ -119,6 +144,7 @@ def build_app():
         )
         selector = gr.Dropdown(choices=choices, label="Paper", value=choices[0] if choices else None)
         with gr.Tab("Overview"):
+            overview = gr.Markdown(label="Overview")
             summary = gr.JSON(label="Paper Summary")
         with gr.Tab("Claims"):
             claims = gr.Dataframe(
@@ -144,14 +170,14 @@ def build_app():
         selector.change(
             select_paper,
             inputs=selector,
-            outputs=[summary, claims, claim_selector, evidence, report],
+            outputs=[overview, summary, claims, claim_selector, evidence, report],
         )
         claim_selector.change(select_claim, inputs=[selector, claim_selector], outputs=evidence)
         if choices:
             demo.load(
                 select_paper,
                 inputs=selector,
-                outputs=[summary, claims, claim_selector, evidence, report],
+                outputs=[overview, summary, claims, claim_selector, evidence, report],
             )
 
     return demo

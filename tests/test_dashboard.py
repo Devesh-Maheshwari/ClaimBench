@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from claimbench.dashboard.app import claim_choices, evidence_markdown, load_dashboard_manifests
+from claimbench.dashboard.app import (
+    claim_choices,
+    evidence_markdown,
+    load_dashboard_manifests,
+    overview_markdown,
+)
 from claimbench.storage.local_store import LocalStore
 
 
@@ -20,6 +25,19 @@ def test_evidence_markdown_contains_claim_contract() -> None:
     assert "Expected metric" in rendered
     assert "Observed metric" in rendered
     assert "Command" in rendered
+
+
+def test_overview_markdown_contains_demo_summary() -> None:
+    store = LocalStore()
+    summary = store.paper_summary("quant_2308_00928")
+
+    rendered = overview_markdown(summary)
+
+    assert "## QUANT" in rendered
+    assert "Overall status" in rendered
+    assert "Cached demo runs: `1`" in rendered
+    assert "Local/self-hosted runs" in rendered
+    assert "https://github.com/angus924/quant" in rendered
 
 
 def test_claim_choices_returns_manifest_claim_ids() -> None:
