@@ -206,6 +206,24 @@ def test_show_paper_cli_includes_cached_run_verdicts(tmp_path: Path) -> None:
     assert "exp_accuracy" in result.output
 
 
+def test_show_paper_cli_can_ignore_cached_runs(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    _write_manifest(manifest_path)
+
+    result = runner.invoke(
+        app,
+        ["show-paper", str(manifest_path), "--no-cached-runs"],
+        terminal_width=200,
+    )
+
+    assert result.exit_code == 0
+    assert "Overall status: needs_review" in result.output
+    assert "Claim status counts: executable=1" in result.output
+    assert "Experiment status counts: not_run=1" in result.output
+    assert "Failure category counts: not_run=1" in result.output
+    assert "observed not run" in result.output
+
+
 def test_run_experiment_cli_writes_cache_record(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

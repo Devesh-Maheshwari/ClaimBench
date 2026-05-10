@@ -118,12 +118,17 @@ def list_papers(
 @app.command("show-paper")
 def show_paper(
     path: Annotated[Path, typer.Argument(help="Path to a ClaimManifest JSON file.")],
+    use_cached_runs: Annotated[
+        bool,
+        typer.Option("--cached-runs/--no-cached-runs", help="Include manifest cached_runs in the summary."),
+    ] = True,
 ) -> None:
     """Show a compact paper and claim summary from a manifest."""
 
     try:
         manifest = load_manifest(path)
-        generated = generate_reproducibility_report(manifest, load_cached_run_results(manifest))
+        run_results = load_cached_run_results(manifest) if use_cached_runs else []
+        generated = generate_reproducibility_report(manifest, run_results)
     except (ManifestError, KeyError, ValueError) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
