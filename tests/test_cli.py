@@ -308,6 +308,21 @@ def test_import_cache_record_cli_appends_record(tmp_path: Path) -> None:
     assert updated["cached_runs"][-1]["run_id"] == "fixture_new_cached_accuracy"
 
 
+def test_smoke_test_cli_writes_artifacts(tmp_path: Path) -> None:
+    artifact_dir = tmp_path / "smoke_artifacts"
+
+    result = runner.invoke(app, ["smoke-test", "--artifact-dir", str(artifact_dir)])
+
+    assert result.exit_code == 0
+    assert "Smoke test status" in result.output
+    assert '"status": "succeeded"' in result.output
+    assert (artifact_dir / "result.json").exists()
+    assert (artifact_dir / "cache_record.json").exists()
+    cache_record = json.loads((artifact_dir / "cache_record.json").read_text(encoding="utf-8"))
+    assert cache_record["experiment_id"] == "smoke_exp_accuracy"
+    assert cache_record["metrics"]["accuracy"] == 0.91
+
+
 def test_run_experiment_cli_rejects_unknown_sandbox(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     _write_manifest(manifest_path)

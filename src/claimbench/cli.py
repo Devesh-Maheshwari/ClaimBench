@@ -21,6 +21,7 @@ from claimbench.manifest import (
 )
 from claimbench.mcp_server import McpDependencyError, run_mcp_server
 from claimbench.onboarding import init_paper_manifest
+from claimbench.paths import SMOKE_MANIFEST_PATH, SMOKE_WORKSPACE_ROOT
 from claimbench.report import generate_reproducibility_report, report_to_dict, report_to_markdown
 from claimbench.repo_scanner import scan_repository
 from claimbench.runner.artifacts import write_run_artifacts
@@ -287,6 +288,41 @@ def import_cache_record(
         raise typer.Exit(1) from exc
 
     print(json.dumps(result, indent=2, default=str))
+
+
+@app.command("smoke-test")
+def smoke_test(
+    artifact_dir: Annotated[
+        Path,
+        typer.Option("--artifact-dir", help="Directory to write smoke test artifacts."),
+    ] = Path("runs/smoke_cli"),
+) -> None:
+    """Run the built-in fixture through the local runner and artifact writer."""
+
+    try:
+        manifest = load_manifest(SMOKE_MANIFEST_PATH)
+        metric_output = SMOKE_WORKSPACE_ROOT / "runs" / "smoke_metrics.json"
+        result = run_manifest_experiment(
+            manifest,
+            "smoke_exp_accuracy",
+            workspace=SMOKE_WORKSPACE_ROOT,
+            metric_output_path=metric_output,
+        )
+        artifact_summary = write_run_artifacts(
+            manifest,
+            result,
+            artifact_dir,
+            metric_output_path=metric_output,
+        )
+    except (ManifestError, KeyError, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    console.print(f"[green]Smoke test status:[/green] {result.status}")
+    console.print(json.dumps(artifact_summary, indent=2, default=str))
+    console.print(json.dumps(asdict(result), indent=2, default=str))
+    if result.status in {"failed", "timed_out"}:
+        raise typer.Exit(1)
 
 
 @app.command("run-experiment")

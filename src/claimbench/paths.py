@@ -12,4 +12,7 @@ REPO_ROOT = SRC_ROOT.parent
 SCHEMA_PATH = PACKAGE_ROOT / "schemas" / "claim_manifest.schema.json"
 EXAMPLES_ROOT = REPO_ROOT / "examples"
 EXAMPLE_MANIFESTS_ROOT = EXAMPLES_ROOT / "manifests"
+FIXTURES_ROOT = EXAMPLES_ROOT / "fixtures"
+SMOKE_MANIFEST_PATH = FIXTURES_ROOT / "manifests" / "smoke_test.manifest.json"
+SMOKE_WORKSPACE_ROOT = FIXTURES_ROOT / "smoke_workspace"
 REPORTS_ROOT = EXAMPLES_ROOT / "reports"
