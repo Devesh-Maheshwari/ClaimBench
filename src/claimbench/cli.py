@@ -276,6 +276,14 @@ def dashboard(
         Path,
         typer.Option("--root", help="Directory containing *.manifest.json files."),
     ] = Path("examples/manifests"),
+    host: Annotated[
+        str,
+        typer.Option("--host", help="Server host for the Gradio dashboard."),
+    ] = "127.0.0.1",
+    port: Annotated[
+        int | None,
+        typer.Option("--port", help="Server port for the Gradio dashboard."),
+    ] = None,
     share: Annotated[
         bool,
         typer.Option("--share", help="Create a public Gradio share link."),
@@ -286,7 +294,7 @@ def dashboard(
     try:
         from claimbench.dashboard.app import build_app
 
-        build_app(root).launch(share=share)
+        build_app(root).launch(server_name=host, server_port=port, share=share)
     except ImportError as exc:
         console.print(
             "Dashboard dependencies are not installed.\n"

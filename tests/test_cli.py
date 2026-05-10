@@ -451,12 +451,24 @@ def test_dashboard_cli_launches_dashboard(monkeypatch: pytest.MonkeyPatch) -> No
     fake_module.build_app = fake_build_app
     monkeypatch.setitem(sys.modules, "claimbench.dashboard.app", fake_module)
 
-    result = runner.invoke(app, ["dashboard", "--root", "examples/manifests", "--share"])
+    result = runner.invoke(
+        app,
+        [
+            "dashboard",
+            "--root",
+            "examples/manifests",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "7860",
+            "--share",
+        ],
+    )
 
     assert result.exit_code == 0
     assert calls == [
         {"root": Path("examples/manifests")},
-        {"share": True},
+        {"server_name": "0.0.0.0", "server_port": 7860, "share": True},
     ]
 
 
