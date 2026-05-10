@@ -41,7 +41,9 @@ def test_local_store_paper_catalog_rows_summarize_all_papers() -> None:
     assert rows[0][3] == 2
     assert rows[0][4] == 2
     assert rows[1][4] == 1
-    assert "github.com" in rows[2][7]
+    assert rows[0][7] == "none=2"
+    assert rows[1][7] == "none=1"
+    assert "github.com" in rows[2][8]
 
 
 def test_local_store_experiment_rows_include_cached_run_results() -> None:

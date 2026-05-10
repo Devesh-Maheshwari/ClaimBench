@@ -57,6 +57,7 @@ class LocalStore:
                     summary["num_cached_runs"],
                     summary["num_reproduced"],
                     summary["num_needs_review"],
+                    _format_counts(summary["failure_category_counts"]),
                     summary["repo_url"],
                 ]
             )
@@ -250,6 +251,12 @@ def _display_path(path: Path) -> str:
         return path.relative_to(Path.cwd()).as_posix()
     except ValueError:
         return path.as_posix()
+
+
+def _format_counts(counts: dict[str, int]) -> str:
+    if not counts:
+        return "none"
+    return ", ".join(f"{key}={value}" for key, value in sorted(counts.items()))
 
 
 def _overall_status(statuses: list[str]) -> str:

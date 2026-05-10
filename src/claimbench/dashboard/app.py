@@ -251,6 +251,7 @@ def build_app(manifest_root: Path = Path("examples/manifests")):
                     "Cached Runs",
                     "Reproduced",
                     "Needs Review",
+                    "Failure Categories",
                     "Repository",
                 ],
                 label="Paper Catalog",
