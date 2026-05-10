@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from claimbench.dashboard.app import evidence_markdown, load_dashboard_manifests
+from claimbench.dashboard.app import claim_choices, evidence_markdown, load_dashboard_manifests
 from claimbench.storage.local_store import LocalStore
 
 
@@ -20,3 +20,29 @@ def test_evidence_markdown_contains_claim_contract() -> None:
     assert "Expected metric" in rendered
     assert "Observed metric" in rendered
     assert "Command" in rendered
+
+
+def test_claim_choices_returns_manifest_claim_ids() -> None:
+    manifests = load_dashboard_manifests()
+    minirocket = next(
+        manifest for manifest in manifests if manifest.paper_id == "minirocket_2012_08791"
+    )
+
+    assert claim_choices(minirocket) == [
+        "minirocket_claim_full_ucr_runtime",
+        "minirocket_claim_repeatability",
+    ]
+
+
+def test_selected_claim_evidence_renders_specific_claim() -> None:
+    store = LocalStore()
+    evidence = store.claim_evidence(
+        "minirocket_2012_08791",
+        "minirocket_claim_repeatability",
+    )
+
+    rendered = evidence_markdown(evidence)
+
+    assert "Evidence for `minirocket_claim_repeatability`" in rendered
+    assert "repeatability" in rendered or "Repeatability" in rendered
+    assert "Observed metric: `0.0`" in rendered

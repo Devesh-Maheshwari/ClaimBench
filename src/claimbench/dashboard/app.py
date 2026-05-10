@@ -55,6 +55,12 @@ def claims_rows(manifest: ClaimManifest) -> list[list[Any]]:
     return rows
 
 
+def claim_choices(manifest: ClaimManifest) -> list[str]:
+    """Return claim IDs for a paper."""
+
+    return [claim["claim_id"] for claim in manifest.claims]
+
+
 def evidence_markdown(evidence: ClaimEvidence) -> str:
     """Render claim evidence as markdown."""
 
@@ -94,9 +100,15 @@ def build_app():
 
     def select_paper(paper_id: str):
         summary = store.paper_summary(paper_id)
-        evidence = evidence_markdown(store.claim_evidence(paper_id))
+        rows = store.claim_rows(paper_id)
+        claim_ids = [row[0] for row in rows]
+        selected_claim = claim_ids[0] if claim_ids else None
+        evidence = evidence_markdown(store.claim_evidence(paper_id, selected_claim))
         report = store.report_preview(paper_id)
-        return summary, store.claim_rows(paper_id), evidence, report
+        return summary, rows, gr.update(choices=claim_ids, value=selected_claim), evidence, report
+
+    def select_claim(paper_id: str, claim_id: str):
+        return evidence_markdown(store.claim_evidence(paper_id, claim_id))
 
     with gr.Blocks(title="ClaimBench") as demo:
         gr.Markdown(
@@ -124,13 +136,23 @@ def build_app():
                 interactive=False,
             )
         with gr.Tab("Evidence"):
+            claim_selector = gr.Dropdown(label="Claim", choices=[], value=None)
             evidence = gr.Markdown(label="Evidence")
         with gr.Tab("Report Preview"):
             report = gr.Markdown(label="Report Preview")
 
-        selector.change(select_paper, inputs=selector, outputs=[summary, claims, evidence, report])
+        selector.change(
+            select_paper,
+            inputs=selector,
+            outputs=[summary, claims, claim_selector, evidence, report],
+        )
+        claim_selector.change(select_claim, inputs=[selector, claim_selector], outputs=evidence)
         if choices:
-            demo.load(select_paper, inputs=selector, outputs=[summary, claims, evidence, report])
+            demo.load(
+                select_paper,
+                inputs=selector,
+                outputs=[summary, claims, claim_selector, evidence, report],
+            )
 
     return demo
 
