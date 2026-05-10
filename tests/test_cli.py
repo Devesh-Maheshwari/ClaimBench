@@ -183,6 +183,25 @@ def test_list_papers_cli_shows_status_and_failure_summary(tmp_path: Path) -> Non
     assert "none=1" in result.output
 
 
+def test_show_paper_cli_includes_cached_run_verdicts(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    _write_manifest(manifest_path)
+
+    result = runner.invoke(
+        app,
+        ["show-paper", str(manifest_path)],
+        terminal_width=200,
+    )
+
+    assert result.exit_code == 0
+    assert "Fixture Paper" in result.output
+    assert "claim_accuracy" in result.output
+    assert "reproduced" in result.output
+    assert "accuracy=0.9" in result.output
+    assert "0.91" in result.output
+    assert "exp_accuracy" in result.output
+
+
 def test_run_experiment_cli_writes_cache_record(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

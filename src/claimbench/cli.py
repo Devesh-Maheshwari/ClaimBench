@@ -42,7 +42,7 @@ from claimbench.tools.local import (
 
 
 app = typer.Typer(help="ClaimBench reproducibility auditor CLI.")
-console = Console(width=160)
+console = Console(width=240)
 
 
 @app.command("validate-manifest")
@@ -123,7 +123,8 @@ def show_paper(
 
     try:
         manifest = load_manifest(path)
-    except ManifestError as exc:
+        generated = generate_reproducibility_report(manifest, load_cached_run_results(manifest))
+    except (ManifestError, KeyError, ValueError) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
 
@@ -133,21 +134,22 @@ def show_paper(
     console.print(f"arXiv: {paper['arxiv_id']}")
     console.print(f"Repo: {paper['repo_url']} @ {paper['repo_commit']}")
 
-    table = Table(title="Claims")
-    table.add_column("Claim ID")
-    table.add_column("Status")
-    table.add_column("Expected Metric")
-    table.add_column("Text")
-
-    for claim in manifest.claims:
-        metric = claim["expected_metric"]
-        table.add_row(
-            claim["claim_id"],
-            claim["status"],
-            f"{metric['name']}={metric['value']}",
-            claim["text"],
+    console.print("[bold]Claims[/bold]")
+    for claim in generated.claims:
+        observed = str(claim.observed_metric) if claim.observed_metric is not None else "not run"
+        experiments = ", ".join(claim.linked_experiment_ids) or "none"
+        console.print(
+            f"- {claim.claim_id}: {claim.status} | "
+            f"expected {_format_metric_for_cli(claim.expected_metric)} | "
+            f"observed {observed} | experiments {experiments}"
         )
-    console.print(table)
+        console.print(f"  {claim.text}")
+
+
+def _format_metric_for_cli(metric: dict[str, object]) -> str:
+    name = metric.get("name", "metric")
+    value = metric.get("value", "unknown")
+    return f"{name}={value}"
 
 
 @app.command("scan-repo")
