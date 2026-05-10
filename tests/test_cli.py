@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import sys
 import json
+import types
 from pathlib import Path
 
 import pytest
@@ -431,3 +433,35 @@ def test_mcp_server_cli_reports_missing_optional_dependency(monkeypatch: pytest.
 
     assert result.exit_code == 1
     assert "pip install -e" in result.output
+
+
+def test_dashboard_cli_launches_dashboard(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    class FakeDashboard:
+        def launch(self, **kwargs: object) -> None:
+            calls.append(kwargs)
+
+    fake_module = types.ModuleType("claimbench.dashboard.app")
+    fake_module.build_app = lambda: FakeDashboard()
+    monkeypatch.setitem(sys.modules, "claimbench.dashboard.app", fake_module)
+
+    result = runner.invoke(app, ["dashboard", "--share"])
+
+    assert result.exit_code == 0
+    assert calls == [{"share": True}]
+
+
+def test_dashboard_cli_reports_missing_optional_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_module = types.ModuleType("claimbench.dashboard.app")
+
+    def fake_build_app() -> object:
+        raise ImportError("No module named 'gradio'")
+
+    fake_module.build_app = fake_build_app
+    monkeypatch.setitem(sys.modules, "claimbench.dashboard.app", fake_module)
+
+    result = runner.invoke(app, ["dashboard"])
+
+    assert result.exit_code == 1
+    assert "pip install -e '.[dashboard]'" in result.output

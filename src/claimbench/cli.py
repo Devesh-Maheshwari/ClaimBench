@@ -270,6 +270,28 @@ def mcp_server(
         raise typer.Exit(1) from exc
 
 
+@app.command("dashboard")
+def dashboard(
+    share: Annotated[
+        bool,
+        typer.Option("--share", help="Create a public Gradio share link."),
+    ] = False,
+) -> None:
+    """Launch the local Gradio dashboard."""
+
+    try:
+        from claimbench.dashboard.app import build_app
+
+        build_app().launch(share=share)
+    except ImportError as exc:
+        console.print(
+            "Dashboard dependencies are not installed.\n"
+            "Install them with: pip install -e '.[dashboard]'",
+            markup=False,
+        )
+        raise typer.Exit(1) from exc
+
+
 @app.command("import-cache-record")
 def import_cache_record(
     manifest_path: Annotated[Path, typer.Argument(help="Path to a ClaimManifest JSON file.")],
