@@ -65,6 +65,7 @@ def overview_markdown(summary: dict[str, Any]) -> str:
     """Render a readable paper overview."""
 
     paper_url = summary.get("paper_url") or f"https://arxiv.org/abs/{summary['arxiv_id']}"
+    failure_counts = _format_counts(summary["failure_category_counts"])
     return "\n".join(
         [
             f"## {summary['title']}",
@@ -75,6 +76,7 @@ def overview_markdown(summary: dict[str, Any]) -> str:
             f"- Cached demo runs: `{summary['num_cached_runs']}`",
             f"- Needs review: `{summary['num_needs_review']}`",
             f"- Reproduced: `{summary['num_reproduced']}`",
+            f"- Failure categories: `{failure_counts}`",
             f"- arXiv: [{summary['arxiv_id']}]({paper_url})",
             f"- Repository: [{summary['repo_url']}]({summary['repo_url']})",
             f"- Commit: `{summary['repo_commit']}`",
@@ -83,6 +85,12 @@ def overview_markdown(summary: dict[str, Any]) -> str:
             "Local/self-hosted runs can execute manifests in a sandbox and import generated cache records.",
         ]
     )
+
+
+def _format_counts(counts: dict[str, int]) -> str:
+    if not counts:
+        return "none"
+    return ", ".join(f"{key}={value}" for key, value in sorted(counts.items()))
 
 
 def environment_markdown(environment: dict[str, Any]) -> str:

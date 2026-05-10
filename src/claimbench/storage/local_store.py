@@ -80,6 +80,7 @@ class LocalStore:
             "num_cached_runs": report.summary["num_runs"],
             "num_reproduced": statuses.count("reproduced"),
             "num_needs_review": statuses.count("needs_review"),
+            "failure_category_counts": report.summary["failure_category_counts"],
             "overall_status": report.summary["overall_status"],
         }
 

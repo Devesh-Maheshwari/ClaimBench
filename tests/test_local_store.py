@@ -22,6 +22,7 @@ def test_local_store_summary_and_claim_rows() -> None:
     assert summary["paper_id"] == "rocket_1910_13051"
     assert summary["num_claims"] == 2
     assert summary["overall_status"] == "needs_review"
+    assert summary["failure_category_counts"] == {"none": 2}
     assert len(rows) == 2
     assert rows[0][0] == "rocket_claim_full_ucr_runtime"
 

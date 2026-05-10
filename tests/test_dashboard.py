@@ -100,6 +100,7 @@ def test_overview_markdown_contains_demo_summary() -> None:
     assert "## QUANT" in rendered
     assert "Overall status" in rendered
     assert "Cached demo runs: `1`" in rendered
+    assert "Failure categories: `none=1`" in rendered
     assert "Local/self-hosted runs" in rendered
     assert "https://github.com/angus924/quant" in rendered
 
