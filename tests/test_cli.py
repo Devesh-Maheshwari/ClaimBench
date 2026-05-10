@@ -378,6 +378,51 @@ def test_report_cli_renders_json_without_cached_runs(tmp_path: Path) -> None:
     assert data["claims"][0]["observed_metric"] is None
 
 
+def test_report_cli_writes_markdown_output_file(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    output_path = tmp_path / "reports" / "fixture.md"
+    _write_manifest(manifest_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "report",
+            str(manifest_path),
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Report written" in result.output
+    rendered = output_path.read_text(encoding="utf-8")
+    assert "ClaimBench Report: Fixture Paper" in rendered
+    assert "Observed: `0.91`" in rendered
+
+
+def test_report_cli_writes_json_output_file(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    output_path = tmp_path / "reports" / "fixture.json"
+    _write_manifest(manifest_path)
+
+    result = runner.invoke(
+        app,
+        [
+            "report",
+            str(manifest_path),
+            "--format",
+            "json",
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["paper"]["paper_id"] == "fixture"
+    assert payload["summary"]["num_runs"] == 1
+
+
 def test_report_cli_rejects_unknown_format(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     _write_manifest(manifest_path)

@@ -178,6 +178,10 @@ def report(
         bool,
         typer.Option("--cached-runs/--no-cached-runs", help="Include manifest cached_runs in the report."),
     ] = True,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Optional file path to write the rendered report."),
+    ] = None,
 ) -> None:
     """Render a reproducibility report from a manifest."""
 
@@ -190,12 +194,23 @@ def report(
         raise typer.Exit(1) from exc
 
     if output_format == "markdown":
-        console.print(report_to_markdown(generated))
+        rendered = report_to_markdown(generated)
     elif output_format == "json":
-        print(json.dumps(report_to_dict(generated), indent=2, default=str))
+        rendered = json.dumps(report_to_dict(generated), indent=2, default=str)
     else:
         console.print(f"[red]Unsupported report format: {output_format}. Expected 'markdown' or 'json'.[/red]")
         raise typer.Exit(1)
+
+    if output is not None:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered + "\n", encoding="utf-8")
+        console.print(f"[green]Report written:[/green] {output}")
+        return
+
+    if output_format == "json":
+        print(rendered)
+    else:
+        console.print(rendered)
 
 
 @app.command("agent-tool")
