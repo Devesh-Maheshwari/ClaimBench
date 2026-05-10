@@ -4,6 +4,7 @@ from claimbench.dashboard.app import (
     claim_choices,
     evidence_markdown,
     environment_markdown,
+    local_commands_markdown,
     load_dashboard_manifests,
     overview_markdown,
     review_status_markdown,
@@ -65,6 +66,18 @@ def test_review_status_markdown_contains_validation_context() -> None:
     assert "### Unresolved Fields" in rendered
     assert "Docker image digest" in rendered
     assert "Week 2 schema/dashboard work" in rendered
+
+
+def test_local_commands_markdown_renders_copyable_commands() -> None:
+    store = LocalStore()
+    commands = store.local_commands("quant_2308_00928")
+
+    rendered = local_commands_markdown(commands)
+
+    assert "## Local Commands" in rendered
+    assert "```bash" in rendered
+    assert "claimbench validate examples/manifests/quant_2308_00928.manifest.json" in rendered
+    assert "claimbench report examples/manifests/quant_2308_00928.manifest.json --format json" in rendered
 
 
 def test_claim_choices_returns_manifest_claim_ids() -> None:

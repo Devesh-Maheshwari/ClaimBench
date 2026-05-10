@@ -154,6 +154,19 @@ class LocalStore:
             "validation_notes": validation.get("notes", ""),
         }
 
+    def local_commands(self, paper_id: str) -> dict[str, str]:
+        manifest = self.get_manifest(paper_id)
+        manifest_path = _display_path(manifest.path)
+        return {
+            "validate": f"claimbench validate {manifest_path}",
+            "markdown_report": f"claimbench report {manifest_path} --format markdown",
+            "json_report": f"claimbench report {manifest_path} --format json",
+            "cached_evidence": (
+                "claimbench agent-tool claim-evidence "
+                f"--manifest-path {manifest_path} --paper-id {paper_id}"
+            ),
+        }
+
     def claim_evidence(self, paper_id: str, claim_id: str | None = None) -> ClaimEvidence:
         manifest = self.get_manifest(paper_id)
         claim = _select_claim(manifest, claim_id)
@@ -186,6 +199,13 @@ def _format_metric(metric: dict[str, Any]) -> str:
     unit = metric.get("unit")
     suffix = f" {unit}" if unit else ""
     return f"{metric['name']}={metric['value']}{suffix}"
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return path.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _overall_status(statuses: list[str]) -> str:

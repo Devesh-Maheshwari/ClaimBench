@@ -64,6 +64,18 @@ def test_local_store_review_status_includes_unresolved_fields() -> None:
     assert "Initial manifest drafted" in review["manual_edits"][0]
 
 
+def test_local_store_local_commands_point_to_manifest() -> None:
+    store = LocalStore()
+
+    commands = store.local_commands("quant_2308_00928")
+
+    assert commands["validate"] == "claimbench validate examples/manifests/quant_2308_00928.manifest.json"
+    assert commands["markdown_report"].endswith("--format markdown")
+    assert commands["json_report"].endswith("--format json")
+    assert "agent-tool claim-evidence" in commands["cached_evidence"]
+    assert "--paper-id quant_2308_00928" in commands["cached_evidence"]
+
+
 def test_local_store_evidence_and_report_preview() -> None:
     store = LocalStore()
 

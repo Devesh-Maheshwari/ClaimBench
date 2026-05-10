@@ -135,6 +135,24 @@ def review_status_markdown(review: dict[str, Any]) -> str:
     )
 
 
+def local_commands_markdown(commands: dict[str, str]) -> str:
+    """Render copy-ready local commands for the selected paper."""
+
+    return "\n\n".join(
+        [
+            "## Local Commands",
+            "Validate the manifest:",
+            f"```bash\n{commands['validate']}\n```",
+            "Generate a Markdown report:",
+            f"```bash\n{commands['markdown_report']}\n```",
+            "Generate machine-readable JSON:",
+            f"```bash\n{commands['json_report']}\n```",
+            "Inspect cached claim evidence through the agent-tool interface:",
+            f"```bash\n{commands['cached_evidence']}\n```",
+        ]
+    )
+
+
 def evidence_markdown(evidence: ClaimEvidence) -> str:
     """Render claim evidence as markdown."""
 
@@ -180,6 +198,7 @@ def build_app():
         environment = environment_markdown(store.environment_summary(paper_id))
         datasets = store.dataset_rows(paper_id)
         review = review_status_markdown(store.review_status(paper_id))
+        local_commands = local_commands_markdown(store.local_commands(paper_id))
         claim_ids = [row[0] for row in rows]
         selected_claim = claim_ids[0] if claim_ids else None
         evidence = evidence_markdown(store.claim_evidence(paper_id, selected_claim))
@@ -192,6 +211,7 @@ def build_app():
             environment,
             datasets,
             review,
+            local_commands,
             gr.update(choices=claim_ids, value=selected_claim),
             evidence,
             report,
@@ -256,6 +276,8 @@ def build_app():
             )
         with gr.Tab("Review Status"):
             review = gr.Markdown(label="Review Status")
+        with gr.Tab("Local Commands"):
+            local_commands = gr.Markdown(label="Local Commands")
         with gr.Tab("Evidence"):
             claim_selector = gr.Dropdown(label="Claim", choices=[], value=None)
             evidence = gr.Markdown(label="Evidence")
@@ -273,6 +295,7 @@ def build_app():
                 environment,
                 datasets,
                 review,
+                local_commands,
                 claim_selector,
                 evidence,
                 report,
@@ -291,6 +314,7 @@ def build_app():
                     environment,
                     datasets,
                     review,
+                    local_commands,
                     claim_selector,
                     evidence,
                     report,
