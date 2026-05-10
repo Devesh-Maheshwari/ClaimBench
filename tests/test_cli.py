@@ -195,6 +195,10 @@ def test_show_paper_cli_includes_cached_run_verdicts(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert "Fixture Paper" in result.output
+    assert "Overall status: reproduced" in result.output
+    assert "Claim status counts: reproduced=1" in result.output
+    assert "Experiment status counts: succeeded=1" in result.output
+    assert "Failure category counts: none=1" in result.output
     assert "claim_accuracy" in result.output
     assert "reproduced" in result.output
     assert "accuracy=0.9" in result.output

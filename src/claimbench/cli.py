@@ -133,6 +133,16 @@ def show_paper(
     console.print(f"Paper ID: {paper['paper_id']}")
     console.print(f"arXiv: {paper['arxiv_id']}")
     console.print(f"Repo: {paper['repo_url']} @ {paper['repo_commit']}")
+    console.print(f"Overall status: {generated.summary['overall_status']}")
+    console.print(f"Claim status counts: {_format_counts_for_cli(generated.summary['status_counts'])}")
+    console.print(
+        f"Experiment status counts: "
+        f"{_format_counts_for_cli(generated.summary['experiment_status_counts'])}"
+    )
+    console.print(
+        f"Failure category counts: "
+        f"{_format_counts_for_cli(generated.summary['failure_category_counts'])}"
+    )
 
     console.print("[bold]Claims[/bold]")
     for claim in generated.claims:
@@ -150,6 +160,12 @@ def _format_metric_for_cli(metric: dict[str, object]) -> str:
     name = metric.get("name", "metric")
     value = metric.get("value", "unknown")
     return f"{name}={value}"
+
+
+def _format_counts_for_cli(counts: dict[str, int]) -> str:
+    if not counts:
+        return "none"
+    return ", ".join(f"{status}={count}" for status, count in sorted(counts.items()))
 
 
 @app.command("scan-repo")
