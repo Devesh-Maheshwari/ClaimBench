@@ -182,6 +182,10 @@ class LocalStore:
         cli = "PYTHONPATH=src python -m claimbench.cli"
         return {
             "validate": f"{cli} validate-manifest {manifest_path}",
+            "show_paper": f"{cli} show-paper {manifest_path}",
+            "show_paper_without_cached_runs": (
+                f"{cli} show-paper {manifest_path} --no-cached-runs"
+            ),
             "markdown_report": f"{cli} report {manifest_path} --format markdown",
             "json_report": f"{cli} report {manifest_path} --format json",
             "export_reports": (

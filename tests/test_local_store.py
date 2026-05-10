@@ -109,6 +109,14 @@ def test_local_store_local_commands_point_to_manifest() -> None:
         "PYTHONPATH=src python -m claimbench.cli validate-manifest "
         "examples/manifests/quant_2308_00928.manifest.json"
     )
+    assert commands["show_paper"] == (
+        "PYTHONPATH=src python -m claimbench.cli show-paper "
+        "examples/manifests/quant_2308_00928.manifest.json"
+    )
+    assert commands["show_paper_without_cached_runs"] == (
+        "PYTHONPATH=src python -m claimbench.cli show-paper "
+        "examples/manifests/quant_2308_00928.manifest.json --no-cached-runs"
+    )
     assert commands["markdown_report"].endswith("--format markdown")
     assert commands["json_report"].endswith("--format json")
     assert commands["export_reports"] == (

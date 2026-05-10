@@ -143,6 +143,14 @@ def test_local_commands_markdown_renders_copyable_commands() -> None:
         "examples/manifests/quant_2308_00928.manifest.json"
     ) in rendered
     assert (
+        "PYTHONPATH=src python -m claimbench.cli show-paper "
+        "examples/manifests/quant_2308_00928.manifest.json"
+    ) in rendered
+    assert (
+        "PYTHONPATH=src python -m claimbench.cli show-paper "
+        "examples/manifests/quant_2308_00928.manifest.json --no-cached-runs"
+    ) in rendered
+    assert (
         "PYTHONPATH=src python -m claimbench.cli report "
         "examples/manifests/quant_2308_00928.manifest.json --format json"
     ) in rendered
