@@ -99,6 +99,7 @@ def report_to_markdown(report: ReproducibilityReport) -> str:
         f"- Overall status: `{summary['overall_status']}`",
         f"- Claims: `{summary['num_claims']}`",
         f"- Experiment runs: `{summary['num_runs']}`",
+        f"- Claim status counts: `{_format_status_counts(summary['status_counts'])}`",
         "",
         "## Claims",
     ]
@@ -233,6 +234,12 @@ def _overall_status(statuses: list[str]) -> str:
     if any(status in {"failed", "timed_out", "partial"} for status in statuses):
         return "partial"
     return "needs_review"
+
+
+def _format_status_counts(status_counts: dict[str, int]) -> str:
+    if not status_counts:
+        return "none"
+    return ", ".join(f"{status}={count}" for status, count in sorted(status_counts.items()))
 
 
 def _format_metric(metric: dict[str, Any]) -> str:

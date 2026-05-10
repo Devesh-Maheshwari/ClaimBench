@@ -58,12 +58,14 @@ def _manifest(tmp_path: Path) -> ClaimManifest:
 
 def test_generate_reproducibility_report_without_runs(tmp_path: Path) -> None:
     report = generate_reproducibility_report(_manifest(tmp_path))
+    markdown = report_to_markdown(report)
 
     assert report.summary["overall_status"] == "needs_review"
     assert report.summary["num_runs"] == 0
     assert report.claims[0].status == "executable"
     assert report.claims[0].observed_metric is None
     assert report.experiments[0].status == "not_run"
+    assert "Claim status counts: `executable=1`" in markdown
 
 
 def test_generate_reproducibility_report_with_reproduced_result(tmp_path: Path) -> None:
@@ -96,6 +98,7 @@ def test_generate_reproducibility_report_with_reproduced_result(tmp_path: Path) 
     assert report.claims[0].observed_metric == 0.91
     assert data["experiments"][0]["runtime_seconds"] == 1.2
     assert "ClaimBench Report: Fixture Paper" in markdown
+    assert "Claim status counts: `reproduced=1`" in markdown
     assert "Observed metric is within tolerance." in markdown
 
 
