@@ -111,6 +111,34 @@ class LocalStore:
             )
         return rows
 
+    def environment_summary(self, paper_id: str) -> dict[str, Any]:
+        manifest = self.get_manifest(paper_id)
+        environment = manifest.data.get("environment", {})
+        return {
+            "execution_mode": environment.get("execution_mode", "unknown"),
+            "base_image": environment.get("base_image") or "not specified",
+            "python_version": environment.get("python_version") or "not specified",
+            "cuda_version": environment.get("cuda_version") or "not required",
+            "dependency_files": environment.get("dependency_files", []),
+            "image_digest": environment.get("image_digest") or "not pinned",
+        }
+
+    def dataset_rows(self, paper_id: str) -> list[list[Any]]:
+        manifest = self.get_manifest(paper_id)
+        rows: list[list[Any]] = []
+        for dataset in manifest.data.get("datasets", []):
+            rows.append(
+                [
+                    dataset["dataset_id"],
+                    dataset["name"],
+                    dataset["source"],
+                    dataset.get("version") or "not specified",
+                    dataset.get("sha256") or "not pinned",
+                    dataset.get("access_notes") or "",
+                ]
+            )
+        return rows
+
     def claim_evidence(self, paper_id: str, claim_id: str | None = None) -> ClaimEvidence:
         manifest = self.get_manifest(paper_id)
         claim = _select_claim(manifest, claim_id)

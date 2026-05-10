@@ -38,6 +38,20 @@ def test_local_store_experiment_rows_include_cached_run_results() -> None:
     assert "scripts/run_minirocket_single_dataset.py" in rows[0][6]
 
 
+def test_local_store_resource_rows_include_environment_and_datasets() -> None:
+    store = LocalStore()
+
+    environment = store.environment_summary("rocket_1910_13051")
+    datasets = store.dataset_rows("rocket_1910_13051")
+
+    assert environment["execution_mode"] == "docker"
+    assert environment["base_image"] == "python:3.10-slim"
+    assert environment["dependency_files"] == ["requirements.txt"]
+    assert datasets[0][0] == "ucr_archive"
+    assert datasets[0][4] == "not pinned"
+    assert "selected small datasets" in datasets[0][5]
+
+
 def test_local_store_evidence_and_report_preview() -> None:
     store = LocalStore()
 

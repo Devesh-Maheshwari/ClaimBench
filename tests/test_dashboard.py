@@ -3,6 +3,7 @@ from __future__ import annotations
 from claimbench.dashboard.app import (
     claim_choices,
     evidence_markdown,
+    environment_markdown,
     load_dashboard_manifests,
     overview_markdown,
 )
@@ -38,6 +39,18 @@ def test_overview_markdown_contains_demo_summary() -> None:
     assert "Cached demo runs: `1`" in rendered
     assert "Local/self-hosted runs" in rendered
     assert "https://github.com/angus924/quant" in rendered
+
+
+def test_environment_markdown_contains_resource_summary() -> None:
+    store = LocalStore()
+    environment = store.environment_summary("minirocket_2012_08791")
+
+    rendered = environment_markdown(environment)
+
+    assert "## Environment" in rendered
+    assert "Execution mode: `docker`" in rendered
+    assert "Base image: `python:3.10-slim`" in rendered
+    assert "Dependency files: `requirements.txt`" in rendered
 
 
 def test_claim_choices_returns_manifest_claim_ids() -> None:

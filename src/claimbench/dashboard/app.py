@@ -85,6 +85,24 @@ def overview_markdown(summary: dict[str, Any]) -> str:
     )
 
 
+def environment_markdown(environment: dict[str, Any]) -> str:
+    """Render environment requirements for a paper."""
+
+    dependency_files = ", ".join(environment["dependency_files"]) or "none listed"
+    return "\n".join(
+        [
+            "## Environment",
+            "",
+            f"- Execution mode: `{environment['execution_mode']}`",
+            f"- Base image: `{environment['base_image']}`",
+            f"- Python: `{environment['python_version']}`",
+            f"- CUDA: `{environment['cuda_version']}`",
+            f"- Dependency files: `{dependency_files}`",
+            f"- Image digest: `{environment['image_digest']}`",
+        ]
+    )
+
+
 def evidence_markdown(evidence: ClaimEvidence) -> str:
     """Render claim evidence as markdown."""
 
@@ -127,6 +145,8 @@ def build_app():
         overview = overview_markdown(summary)
         rows = store.claim_rows(paper_id)
         experiment_rows = store.experiment_rows(paper_id)
+        environment = environment_markdown(store.environment_summary(paper_id))
+        datasets = store.dataset_rows(paper_id)
         claim_ids = [row[0] for row in rows]
         selected_claim = claim_ids[0] if claim_ids else None
         evidence = evidence_markdown(store.claim_evidence(paper_id, selected_claim))
@@ -136,6 +156,8 @@ def build_app():
             summary,
             rows,
             experiment_rows,
+            environment,
+            datasets,
             gr.update(choices=claim_ids, value=selected_claim),
             evidence,
             report,
@@ -184,6 +206,20 @@ def build_app():
                 label="Experiments",
                 interactive=False,
             )
+        with gr.Tab("Resources"):
+            environment = gr.Markdown(label="Environment")
+            datasets = gr.Dataframe(
+                headers=[
+                    "Dataset ID",
+                    "Name",
+                    "Source",
+                    "Version",
+                    "SHA256",
+                    "Access Notes",
+                ],
+                label="Datasets",
+                interactive=False,
+            )
         with gr.Tab("Evidence"):
             claim_selector = gr.Dropdown(label="Claim", choices=[], value=None)
             evidence = gr.Markdown(label="Evidence")
@@ -193,14 +229,34 @@ def build_app():
         selector.change(
             select_paper,
             inputs=selector,
-            outputs=[overview, summary, claims, experiments, claim_selector, evidence, report],
+            outputs=[
+                overview,
+                summary,
+                claims,
+                experiments,
+                environment,
+                datasets,
+                claim_selector,
+                evidence,
+                report,
+            ],
         )
         claim_selector.change(select_claim, inputs=[selector, claim_selector], outputs=evidence)
         if choices:
             demo.load(
                 select_paper,
                 inputs=selector,
-                outputs=[overview, summary, claims, experiments, claim_selector, evidence, report],
+                outputs=[
+                    overview,
+                    summary,
+                    claims,
+                    experiments,
+                    environment,
+                    datasets,
+                    claim_selector,
+                    evidence,
+                    report,
+                ],
             )
 
     return demo
