@@ -12,6 +12,7 @@ from claimbench.cli import app
 from claimbench.manifest import ClaimManifest
 from claimbench.mcp_server import McpDependencyError
 from claimbench.runner.executor import ExperimentRunResult
+from claimbench.runner.verdict import ClaimVerdict
 
 runner = CliRunner()
 
@@ -122,7 +123,15 @@ def test_run_experiment_cli_routes_to_docker_runner(
             stdout="done\n",
             stderr="",
             observed_metric=0.91,
-            verdicts=[],
+            verdicts=[
+                ClaimVerdict(
+                    status="reproduced",
+                    expected=0.9,
+                    observed=0.91,
+                    tolerance={"type": "absolute", "value": 0.02},
+                    reason="Observed metric is within tolerance.",
+                )
+            ],
         )
 
     monkeypatch.setattr(
@@ -222,6 +231,134 @@ def test_show_paper_cli_can_ignore_cached_runs(tmp_path: Path) -> None:
     assert "Experiment status counts: not_run=1" in result.output
     assert "Failure category counts: not_run=1" in result.output
     assert "observed not run" in result.output
+
+
+def test_run_paper_cli_writes_paper_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path = tmp_path / "manifest.json"
+    output_dir = tmp_path / "paper_run"
+    _write_manifest(manifest_path)
+
+    def fake_run_manifest_experiment(
+        manifest: ClaimManifest,
+        experiment_id: str,
+        **kwargs: object,
+    ) -> ExperimentRunResult:
+        return ExperimentRunResult(
+            experiment_id=experiment_id,
+            status="succeeded",
+            command=["python", "run.py"],
+            returncode=0,
+            runtime_seconds=1.2,
+            stdout="done\n",
+            stderr="",
+            observed_metric=0.91,
+            verdicts=[
+                ClaimVerdict(
+                    status="reproduced",
+                    expected=0.9,
+                    observed=0.91,
+                    tolerance={"type": "absolute", "value": 0.02},
+                    reason="Observed metric is within tolerance.",
+                )
+            ],
+        )
+
+    monkeypatch.setattr(
+        "claimbench.cli.run_manifest_experiment",
+        fake_run_manifest_experiment,
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "run-paper",
+            str(manifest_path),
+            "--workspace",
+            str(tmp_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Paper run artifacts written" in result.output
+    assert (output_dir / "experiments" / "exp_accuracy" / "result.json").exists()
+    assert (output_dir / "experiments" / "exp_accuracy" / "cache_record.json").exists()
+    report = json.loads((output_dir / "report.json").read_text(encoding="utf-8"))
+    summary = json.loads((output_dir / "run_summary.json").read_text(encoding="utf-8"))
+    assert report["summary"]["overall_status"] == "reproduced"
+    assert summary["num_completed"] == 1
+    assert summary["report_markdown_path"] == str(output_dir / "report.md")
+
+
+def test_audit_paper_cli_prepares_rocket_manifest(tmp_path: Path) -> None:
+    output_dir = tmp_path / "rocket_audit"
+
+    result = runner.invoke(
+        app,
+        [
+            "audit-paper",
+            "--paper-url",
+            "https://arxiv.org/abs/1910.13051",
+            "--code-url",
+            "https://github.com/angus924/rocket",
+            "--output-dir",
+            str(output_dir),
+            "--prepare-only",
+            "--skip-clone",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Audit manifest written" in result.output
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["paper"]["paper_id"] == "rocket_1910_13051_audit"
+    assert manifest["paper"]["repo_url"] == "https://github.com/angus924/rocket"
+    assert manifest["environment"]["base_image"] == "claimbench/rocket-audit:latest"
+    assert manifest["environment"]["dependency_files"] == [
+        "config/docker/rocket-audit.Dockerfile"
+    ]
+    assert manifest["experiments"][0]["experiment_id"] == "rocket_exp_single_dataset"
+    assert manifest["cached_runs"] == []
+
+
+def test_audit_paper_cli_delegates_to_run_paper(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_dir = tmp_path / "rocket_audit"
+    calls: list[dict[str, object]] = []
+
+    def fake_run_paper(**kwargs: object) -> None:
+        calls.append(kwargs)
+
+    monkeypatch.setattr("claimbench.cli.run_paper", fake_run_paper)
+
+    result = runner.invoke(
+        app,
+        [
+            "audit-paper",
+            "--paper-url",
+            "https://arxiv.org/abs/1910.13051",
+            "--code-url",
+            "https://github.com/angus924/rocket",
+            "--output-dir",
+            str(output_dir),
+            "--skip-clone",
+            "--skip-data-prep",
+            "--sandbox",
+            "docker",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert calls
+    assert calls[0]["manifest_path"] == output_dir / "manifest.json"
+    assert calls[0]["output_dir"] == output_dir / "run"
+    assert calls[0]["sandbox"] == "docker"
 
 
 def test_run_experiment_cli_writes_cache_record(

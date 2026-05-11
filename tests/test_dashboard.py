@@ -38,8 +38,12 @@ def test_dashboard_build_app_accepts_manifest_root(monkeypatch) -> None:
         def change(self, *_args, **_kwargs):
             return None
 
+        def click(self, *_args, **_kwargs):
+            return None
+
     class FakeGradio:
         Blocks = FakeBlocks
+        update = staticmethod(lambda **kwargs: kwargs)
 
         @staticmethod
         def Markdown(*_args, **_kwargs):
@@ -59,6 +63,22 @@ def test_dashboard_build_app_accepts_manifest_root(monkeypatch) -> None:
 
         @staticmethod
         def Dataframe(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def Radio(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def Textbox(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def Button(*_args, **_kwargs):
+            return FakeBlocks()
+
+        @staticmethod
+        def Code(*_args, **_kwargs):
             return FakeBlocks()
 
     class FakeStore:

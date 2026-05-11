@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -164,6 +165,70 @@ def local_commands_markdown(commands: dict[str, str]) -> str:
             "Inspect cached claim evidence through the agent-tool interface:",
             f"```bash\n{commands['cached_evidence']}\n```",
         ]
+    )
+
+
+def audit_parallel_branches_markdown(trace: dict[str, Any]) -> str:
+    """Render parallel agent branch summary from audit_trace.json."""
+
+    branches = trace.get("branch_traces") or {}
+    titles = {
+        "paper": "Paper Agent",
+        "repo": "Repo Agent",
+        "data": "Data Agent",
+        "environment": "Environment Agent",
+    }
+    lines: list[str] = ["## Parallel agent branches", ""]
+    for key in ("paper", "repo", "data", "environment"):
+        block = branches.get(key)
+        if block is None:
+            continue
+        title = titles.get(key, f"{key} Agent")
+        lines.append(f"### {title}")
+        lines.append(f"```json\n{json.dumps(block, indent=2, default=str)}\n```")
+        lines.append("")
+    return "\n".join(lines) if len(lines) > 2 else "_Load an audit trace to see branch results._"
+
+
+def audit_timeline_markdown(trace: dict[str, Any]) -> str:
+    """Compact timeline from graph_trace."""
+
+    events = trace.get("graph_trace") or []
+    lines = ["## Run timeline / graph trace", ""]
+    for ev in events:
+        ts = ev.get("ts", "")
+        phase = ev.get("phase", "")
+        lines.append(f"- **{ts}** — `{phase}`")
+    return "\n".join(lines) if events else "_No trace events._"
+
+
+def audit_retry_markdown(trace: dict[str, Any]) -> str:
+    """Repair and retry history."""
+
+    history = trace.get("repair_history") or []
+    if not history:
+        return "## Retry history\n\n_No repairs recorded._"
+    parts = ["## Retry history", ""]
+    for i, row in enumerate(history):
+        parts.append(f"### Attempt {i + 1}")
+        parts.append(f"```json\n{json.dumps(row, indent=2, default=str)}\n```")
+        parts.append("")
+    return "\n".join(parts)
+
+
+def load_audit_trace_file(path_str: str) -> tuple[str, str, str, str]:
+    """Load audit_trace.json and return markdown panels plus raw JSON."""
+
+    path = Path(path_str.strip())
+    if not path.is_file():
+        empty = f"_File not found: {path}_"
+        return (empty, empty, empty, "")
+    trace = json.loads(path.read_text(encoding="utf-8"))
+    return (
+        audit_parallel_branches_markdown(trace),
+        audit_timeline_markdown(trace),
+        audit_retry_markdown(trace),
+        json.dumps(trace, indent=2, default=str),
     )
 
 
@@ -332,6 +397,39 @@ def build_app(manifest_root: Path = Path("examples/manifests")):
             evidence = gr.Markdown(label="Evidence")
         with gr.Tab("Report Preview"):
             report = gr.Markdown(label="Report Preview")
+        with gr.Tab("Agent audit"):
+            gr.Markdown(
+                "### Verification mode\n"
+                "- **CPU verify**: run `claimbench agent-audit ... --execution-mode cpu --sandbox local|docker`.\n"
+                "- **GPU verify**: same with `--execution-mode gpu` (non-blocking stub: trace shows queued `run_id`).\n"
+                "- **Cached replay**: use **Paper Catalog** / cached runs above (no live sandbox in this UI).\n\n"
+                "> **GPU warning:** remote GPU mode does not wait for training to finish; "
+                "poll your worker or extend the stub backend before trusting results."
+            )
+            verify_mode = gr.Radio(
+                choices=["CPU verify", "GPU verify", "Cached replay"],
+                value="CPU verify",
+                label="Mode (informational)",
+            )
+            trace_path = gr.Textbox(
+                label="Path to audit_trace.json",
+                placeholder="runs/my_audit/audit_trace.json",
+            )
+            load_trace_btn = gr.Button("Load trace")
+            audit_branches = gr.Markdown(label="Parallel branches")
+            audit_timeline = gr.Markdown(label="Timeline")
+            audit_retries = gr.Markdown(label="Retry history")
+            audit_raw = gr.Code(label="Raw trace (JSON)", language="json")
+
+            def _on_load_trace(_mode: str, path: str):
+                branches, timeline, retries, raw = load_audit_trace_file(path)
+                return branches, timeline, retries, raw
+
+            load_trace_btn.click(
+                _on_load_trace,
+                inputs=[verify_mode, trace_path],
+                outputs=[audit_branches, audit_timeline, audit_retries, audit_raw],
+            )
 
         selector.change(
             select_paper,

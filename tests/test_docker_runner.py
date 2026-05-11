@@ -60,6 +60,8 @@ def test_build_docker_command_applies_sandbox_options(tmp_path: Path) -> None:
         f"{tmp_path}:/workspace",
         "--workdir",
         "/workspace/repo",
+        "--env",
+        "PYTHONPATH=/workspace/src",
         "--network",
         "none",
         "--memory",

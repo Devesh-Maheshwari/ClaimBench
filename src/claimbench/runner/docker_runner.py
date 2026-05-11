@@ -93,7 +93,11 @@ def run_manifest_experiment_in_docker(
             stderr=completed.stderr,
             observed_metric=None,
             verdicts=[],
-            error=f"Docker command exited with code {completed.returncode}.",
+            error=_docker_failure_error(
+                code=completed.returncode,
+                stdout=completed.stdout,
+                stderr=completed.stderr,
+            ),
         )
 
     try:
@@ -160,6 +164,8 @@ def build_docker_command(
         f"{workspace}:/workspace",
         "--workdir",
         container_workdir,
+        "--env",
+        "PYTHONPATH=/workspace/src",
     ]
     if network is not None:
         command.extend(["--network", network])
@@ -194,3 +200,10 @@ def _captured_text(value: Any) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", errors="replace")
     return str(value)
+
+
+def _docker_failure_error(*, code: int, stdout: str, stderr: str) -> str:
+    details = stderr.strip() or stdout.strip()
+    if not details:
+        return f"Docker command exited with code {code}."
+    return f"Docker command exited with code {code}: {details}"

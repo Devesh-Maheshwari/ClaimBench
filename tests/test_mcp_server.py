@@ -36,6 +36,12 @@ def test_create_mcp_server_registers_read_only_tools(monkeypatch: pytest.MonkeyP
         "claim_evidence",
         "list_papers",
         "validate_manifest",
+        "start_audit",
+        "get_audit_status",
+        "get_audit_trace",
+        "get_audit_report",
+        "classify_failure",
+        "propose_repair",
     }
     assert server.tools["list_papers"]()["papers"][0]["paper_id"] == "minirocket_2012_08791"
     evidence = server.tools["claim_evidence"](

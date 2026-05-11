@@ -98,7 +98,8 @@ def run_rocket_single_dataset(
         from rocket_functions import apply_kernels, generate_kernels
     except ImportError as exc:
         raise RocketRunError(
-            "Could not import rocket_functions from official ROCKET code path"
+            "Could not import rocket_functions from official ROCKET code path: "
+            f"{exc}"
         ) from exc
 
     loaded = load_ucr_dataset(data_root, dataset)

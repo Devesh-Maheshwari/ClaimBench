@@ -94,7 +94,11 @@ def run_manifest_experiment(
             stderr=completed.stderr,
             observed_metric=None,
             verdicts=[],
-            error=f"Command exited with code {completed.returncode}.",
+            error=_command_failure_error(
+                code=completed.returncode,
+                stdout=completed.stdout,
+                stderr=completed.stderr,
+            ),
         )
 
     try:
@@ -151,3 +155,10 @@ def _find_experiment(manifest: ClaimManifest, experiment_id: str) -> dict[str, A
 def _linked_claims(manifest: ClaimManifest, claim_ids: list[str]) -> list[dict[str, Any]]:
     claim_by_id = {claim["claim_id"]: claim for claim in manifest.claims}
     return [claim_by_id[claim_id] for claim_id in claim_ids if claim_id in claim_by_id]
+
+
+def _command_failure_error(*, code: int, stdout: str, stderr: str) -> str:
+    details = stderr.strip() or stdout.strip()
+    if not details:
+        return f"Command exited with code {code}."
+    return f"Command exited with code {code}: {details}"
